@@ -4,688 +4,193 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>&#12510;&#12540;&#12465;&#12483;&#12488;&#35373;&#23450;</title>
+<title>Market Admin</title>
 <style>
-  :root {
-    --bg:     #0d1117;
-    --bg2:    #161b22;
-    --bg3:    #21262d;
-    --border: #30363d;
-    --text:   #e6edf3;
-    --text2:  #8b949e;
-    --up:     #26a69a;
-    --down:   #ef5350;
-    --accent: #58a6ff;
-    --gold:   #f0c040;
-    --danger: #da3633;
-    --safe:   env(safe-area-inset-bottom, 0px);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: -apple-system, 'Helvetica Neue', sans-serif;
-    font-size: 15px; min-height: 100dvh;
-  }
-
-  /* &#9472;&#9472; &#12504;&#12483;&#12480;&#12540; &#9472;&#9472; */
-  header {
-    background: var(--bg2); border-bottom: 1px solid var(--border);
-    padding: 14px 16px 12px;
-    padding-top: calc(14px + env(safe-area-inset-top, 0px));
-    position: sticky; top: 0; z-index: 50;
-  }
-  .header-row { display: flex; align-items: center; gap: 10px; }
-  .header-title { font-size: 17px; font-weight: 700; flex: 1; }
-  #save-btn {
-    background: var(--accent); color: #fff; border: none;
-    border-radius: 8px; padding: 7px 16px; font-size: 14px;
-    font-weight: 600; cursor: pointer; transition: opacity .15s;
-  }
-  #save-btn:disabled { opacity: .4; }
-  #save-btn:active   { opacity: .7; }
-  .save-status { font-size: 11px; color: var(--text2); margin-top: 4px; min-height: 16px; }
-
-  /* &#9472;&#9472; GitHub&#35373;&#23450;&#12496;&#12540; &#9472;&#9472; */
-  #gh-bar {
-    background: var(--bg3); border-bottom: 1px solid var(--border);
-    padding: 10px 16px; display: flex; gap: 8px; align-items: center;
-    flex-wrap: wrap;
-  }
-  #gh-bar input {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); padding: 6px 10px; font-size: 13px; flex: 1; min-width: 0;
-  }
-  #gh-bar input::placeholder { color: var(--text2); }
-  #gh-bar label { font-size: 12px; color: var(--text2); white-space: nowrap; }
-  #gh-status { font-size: 11px; color: var(--text2); width: 100%; }
-
-  /* &#9472;&#9472; &#12479;&#12502; &#9472;&#9472; */
-  .tabs {
-    display: flex; background: var(--bg2);
-    border-bottom: 1px solid var(--border); overflow-x: auto;
-  }
-  .tab-btn {
-    flex: 1; padding: 12px 8px; background: none; border: none;
-    color: var(--text2); font-size: 13px; font-weight: 500;
-    border-bottom: 2px solid transparent; cursor: pointer;
-    white-space: nowrap; transition: color .15s, border-color .15s;
-  }
-  .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
-
-  /* &#9472;&#9472; &#12513;&#12452;&#12531;&#12467;&#12531;&#12486;&#12531;&#12484; &#9472;&#9472; */
-  main { padding: 0 0 calc(80px + var(--safe)); }
-  .tab-pane { display: none; }
-  .tab-pane.active { display: block; }
-
-  /* &#9472;&#9472; &#12475;&#12463;&#12471;&#12519;&#12531;&#35211;&#20986;&#12375; &#9472;&#9472; */
-  .section-head {
-    padding: 14px 16px 6px; font-size: 12px;
-    color: var(--text2); text-transform: uppercase; letter-spacing: .05em;
-  }
-
-  /* &#9472;&#9472; &#37528;&#26564;&#12522;&#12473;&#12488; &#9472;&#9472; */
-  .symbol-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
-
-  .symbol-row {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 14px;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .symbol-row.disabled { opacity: .5; }
-
-  .sym-info { flex: 1; min-width: 0; }
-  .sym-name { font-weight: 600; font-size: 15px; }
-  .sym-ticker { font-size: 12px; color: var(--text2); margin-top: 1px; }
-  .sym-cat {
-    display: inline-block; font-size: 10px; padding: 1px 7px;
-    border-radius: 10px; background: var(--bg3); color: var(--text2);
-    margin-top: 3px;
-  }
-  .sym-actions { display: flex; align-items: center; gap: 10px; }
-
-  /* &#12488;&#12464;&#12523;&#12473;&#12452;&#12483;&#12481; */
-  .toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .toggle-track {
-    position: absolute; inset: 0; border-radius: 13px;
-    background: var(--border); transition: background .2s; cursor: pointer;
-  }
-  .toggle-track::after {
-    content: ''; position: absolute;
-    left: 3px; top: 3px; width: 20px; height: 20px;
-    border-radius: 50%; background: #fff;
-    transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.4);
-  }
-  .toggle input:checked + .toggle-track { background: var(--up); }
-  .toggle input:checked + .toggle-track::after { transform: translateX(18px); }
-
-  /* &#21066;&#38500;&#12508;&#12479;&#12531; */
-  .del-btn {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: rgba(218,54,51,.15); border: none;
-    color: var(--down); font-size: 16px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: background .15s;
-  }
-  .del-btn:active { background: rgba(218,54,51,.35); }
-
-  /* &#9472;&#9472; &#37528;&#26564;&#36861;&#21152;&#12501;&#12457;&#12540;&#12512; &#9472;&#9472; */
-  .add-form {
-    margin: 12px 16px 0;
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 10px; overflow: hidden;
-  }
-  .add-form-head {
-    padding: 10px 14px; font-size: 13px; font-weight: 600;
-    color: var(--text2); border-bottom: 1px solid var(--border);
-    cursor: pointer; display: flex; justify-content: space-between;
-    user-select: none;
-  }
-  .add-form-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-  .add-form-body.hidden { display: none; }
-  .form-row { display: flex; gap: 8px; }
-  .form-row input, .form-row select {
-    flex: 1; background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 6px; color: var(--text); padding: 8px 10px; font-size: 14px;
-  }
-  .form-row select option { background: var(--bg3); }
-  .add-submit {
-    width: 100%; padding: 10px; background: var(--accent); border: none;
-    border-radius: 7px; color: #fff; font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: opacity .15s;
-  }
-  .add-submit:active { opacity: .7; }
-
-  /* &#9472;&#9472; &#26465;&#20214;&#12479;&#12502; &#9472;&#9472; */
-  .cond-list { padding: 8px 16px; display: flex; flex-direction: column; gap: 10px; }
-  .cond-card {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px;
-  }
-  .cond-label { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
-  .cond-val { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
-  .cond-val span { font-size: 13px; font-weight: 400; color: var(--text2); margin-left: 4px; }
-  input[type=range] {
-    width: 100%; height: 4px; border-radius: 2px;
-    background: var(--border); accent-color: var(--accent);
-    -webkit-appearance: none; appearance: none; cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 22px; height: 22px;
-    border-radius: 50%; background: var(--accent);
-    box-shadow: 0 1px 4px rgba(0,0,0,.4);
-  }
-  .cond-toggle-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 4px 0;
-  }
-  .cond-toggle-label { font-size: 14px; }
-
-  /* &#9472;&#9472; TF&#12479;&#12502; &#9472;&#9472; */
-  .tf-list { padding: 8px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .tf-row {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 14px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .tf-info { flex: 1; }
-  .tf-name { font-weight: 600; font-size: 15px; }
-  .tf-detail { font-size: 12px; color: var(--text2); margin-top: 2px; }
-  .weight-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-  .weight-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
-  .weight-val { font-size: 12px; color: var(--accent); width: 16px; text-align: right; }
-
-  /* &#9472;&#9472; ST&#35373;&#23450;&#12479;&#12502; &#9472;&#9472; */
-  .st-section { padding: 8px 16px; }
-  .st-card {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px;
-    display: flex; flex-direction: column; gap: 14px;
-  }
-
-  /* &#9472;&#9472; &#12488;&#12540;&#12473;&#12488; &#9472;&#9472; */
-  #toast {
-    position: fixed; bottom: calc(24px + var(--safe)); left: 50%; transform: translateX(-50%);
-    background: var(--bg3); border: 1px solid var(--border); border-radius: 20px;
-    padding: 10px 20px; font-size: 13px; font-weight: 500;
-    opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap;
-    box-shadow: 0 4px 16px rgba(0,0,0,.4); z-index: 999;
-  }
-  #toast.show { opacity: 1; }
-  #toast.ok   { border-color: var(--up); color: var(--up); }
-  #toast.err  { border-color: var(--down); color: var(--down); }
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--up:#26a69a;--accent:#58a6ff;--down:#ef5350;--gold:#f0c040;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,sans-serif;font-size:15px;}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 16px 10px;padding-top:calc(14px + env(safe-area-inset-top,0px));position:sticky;top:0;z-index:50;}
+.hrow{display:flex;align-items:center;gap:8px;}
+.htitle{font-size:17px;font-weight:700;flex:1;}
+.hstatus{font-size:11px;color:var(--text2);margin-top:4px;min-height:15px;}
+button{cursor:pointer;border:none;font-size:14px;font-weight:600;border-radius:8px;padding:7px 16px;transition:opacity .15s;}
+button:active{opacity:.7;}
+#btn-run{background:var(--gold);color:#000;}
+#btn-save{background:var(--accent);color:#fff;}
+#btn-run:disabled,#btn-save:disabled{opacity:.4;}
+#gh-bar{background:var(--bg3);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+#gh-bar label{font-size:12px;color:var(--text2);white-space:nowrap;}
+#gh-bar input{background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:13px;flex:1;min-width:80px;}
+#gh-bar input::placeholder{color:var(--text2);}
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);}
+.tbtn{flex:1;padding:11px 6px;background:none;border:none;color:var(--text2);font-size:13px;border-bottom:2px solid transparent;white-space:nowrap;}
+.tbtn.active{color:var(--text);border-bottom-color:var(--accent);}
+main{padding:0 0 80px;}
+.pane{display:none;}.pane.active{display:block;}
+.sec-head{padding:12px 16px 6px;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
+.sym-list{padding:0 14px;display:flex;flex-direction:column;gap:8px;}
+.sym-row{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:10px;}
+.sym-row.off{opacity:.5;}
+.sym-info{flex:1;min-width:0;}
+.sym-name{font-weight:600;font-size:15px;}
+.sym-ticker{font-size:12px;color:var(--text2);margin-top:1px;}
+.sym-cat{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;background:var(--bg3);color:var(--text2);margin-top:3px;}
+.sym-actions{display:flex;align-items:center;gap:10px;}
+.toggle{position:relative;width:44px;height:26px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.ttrack{position:absolute;inset:0;border-radius:13px;background:var(--border);transition:background .2s;cursor:pointer;}
+.ttrack::after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+.toggle input:checked+.ttrack{background:var(--up);}
+.toggle input:checked+.ttrack::after{transform:translateX(18px);}
+.del-btn{width:28px;height:28px;border-radius:50%;background:rgba(218,54,51,.15);border:none;color:var(--down);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;}
+.add-form{margin:12px 14px 0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.add-head{padding:10px 14px;font-size:13px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;user-select:none;}
+.add-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
+.add-body.hidden{display:none;}
+.frow{display:flex;gap:8px;}
+.frow input,.frow select{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-size:14px;}
+.frow select option{background:var(--bg3);}
+.add-submit{width:100%;padding:10px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:14px;font-weight:600;}
+.cond-list{padding:8px 14px;display:flex;flex-direction:column;gap:10px;}
+.cond-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.cond-label{font-size:13px;color:var(--text2);margin-bottom:6px;}
+.cond-val{font-size:22px;font-weight:700;color:var(--accent);margin-bottom:10px;}
+.cond-val span{font-size:13px;font-weight:400;color:var(--text2);margin-left:4px;}
+input[type=range]{width:100%;height:4px;border-radius:2px;background:var(--border);accent-color:var(--accent);-webkit-appearance:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;}
+.tog-label{font-size:14px;}
+.tf-list{padding:8px 14px;display:flex;flex-direction:column;gap:8px;}
+.tf-row{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.tf-info{flex:1;}
+.tf-name{font-weight:600;font-size:15px;}
+.tf-detail{font-size:12px;color:var(--text2);margin-top:2px;}
+.wrow{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.wlabel{font-size:12px;color:var(--text2);white-space:nowrap;}
+.wval{font-size:12px;color:var(--accent);width:16px;text-align:right;}
+.st-section{padding:8px 14px;}
+.st-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:14px;}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:10px 20px;font-size:13px;font-weight:500;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:999;}
+#toast.show{opacity:1;}
+#toast.ok{border-color:var(--up);color:var(--up);}
+#toast.err{border-color:var(--down);color:var(--down);}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="header-row">
-    <div class="header-title">&#9881;&#65039; &#12510;&#12540;&#12465;&#12483;&#12488;&#35373;&#23450;</div>
-    <button id="run-btn" onclick="triggerAction()" disabled style="background:#f0c040;color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-right:6px;">&#9654; &#23455;&#34892;</button>
-    <button id="save-btn" onclick="saveToGitHub()" disabled>&#20445;&#23384;</button>
+  <div class="hrow">
+    <div class="htitle">&#9881; Market Admin</div>
+    <button id="btn-run" onclick="triggerAction()" disabled>&#9654; Run</button>
+    <button id="btn-save" onclick="saveToGitHub()" disabled>Save</button>
   </div>
-  <div class="save-status" id="save-status">GitHub&#12398;&#35373;&#23450;&#12434;&#20837;&#21147;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;</div>
+  <div class="hstatus" id="hstatus">Enter repository and token below</div>
 </header>
-
-<!-- GitHub&#35373;&#23450; -->
 <div id="gh-bar">
-  <label>&#12522;&#12509;&#12472;&#12488;&#12522;</label>
-  <input id="gh-repo" type="text" placeholder="username/repo-name"
-         oninput="onGhChange()" autocapitalize="none" autocorrect="off">
+  <label>Repo</label>
+  <input id="gh-repo" type="text" placeholder="username/repo-name" oninput="onGhChange()" autocapitalize="none" autocorrect="off" spellcheck="false">
   <label>Token</label>
-  <input id="gh-token" type="password" placeholder="ghp_xxxxxxxxxxxx"
-         oninput="onGhChange()" autocapitalize="none" autocorrect="off">
-  <div id="gh-status"></div>
+  <input id="gh-token" type="password" placeholder="github_pat_..." oninput="onGhChange()" autocapitalize="none" autocorrect="off">
 </div>
-
-<!-- &#12479;&#12502; -->
 <div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('symbols',this)">&#37528;&#26564;</button>
-  <button class="tab-btn"       onclick="switchTab('pickup',this)">&#12500;&#12483;&#12463;&#12450;&#12483;&#12503;&#26465;&#20214;</button>
-  <button class="tab-btn"       onclick="switchTab('tf',this)">&#12479;&#12452;&#12512;&#12501;&#12524;&#12540;&#12512;</button>
-  <button class="tab-btn"       onclick="switchTab('st',this)">ST&#35373;&#23450;</button>
+  <button class="tbtn active" onclick="switchTab('symbols',this)">Symbols</button>
+  <button class="tbtn" onclick="switchTab('pickup',this)">Pickup</button>
+  <button class="tbtn" onclick="switchTab('tf',this)">Timeframe</button>
+  <button class="tbtn" onclick="switchTab('st',this)">ST Params</button>
 </div>
-
 <main>
-  <!-- &#9472;&#9472; &#37528;&#26564;&#12479;&#12502; &#9472;&#9472; -->
-  <div class="tab-pane active" id="tab-symbols">
-    <div id="symbol-sections"></div>
-    <!-- &#36861;&#21152;&#12501;&#12457;&#12540;&#12512; -->
+  <div class="pane active" id="pane-symbols">
+    <div id="sym-sections"></div>
     <div class="add-form">
-      <div class="add-form-head" onclick="toggleAddForm()">
-        &#65291; &#37528;&#26564;&#12434;&#36861;&#21152; <span id="add-arrow">&#9660;</span>
-      </div>
-      <div class="add-form-body hidden" id="add-form-body">
-        <div class="form-row">
-          <input id="new-name"   type="text" placeholder="&#34920;&#31034;&#21517;&#65288;&#20363;: &#12486;&#12473;&#12521;&#65289;">
-          <input id="new-ticker" type="text" placeholder="&#12486;&#12451;&#12483;&#12459;&#12540;&#65288;&#20363;: TSLA&#65289;"
-                 autocapitalize="characters" autocorrect="off">
+      <div class="add-head" onclick="toggleAdd()">+ Add symbol <span id="add-arrow">&#9660;</span></div>
+      <div class="add-body hidden" id="add-body">
+        <div class="frow">
+          <input id="new-name" type="text" placeholder="Display name">
+          <input id="new-ticker" type="text" placeholder="Ticker (e.g. TSLA)" autocapitalize="characters" autocorrect="off">
         </div>
-        <div class="form-row">
+        <div class="frow">
           <select id="new-cat">
-            <option>&#31859;&#22269;&#26666;</option><option>&#26085;&#26412;&#26666;</option>
-            <option>&#28858;&#26367;</option><option>&#36020;&#37329;&#23646;</option><option>&#12381;&#12398;&#20182;</option>
+            <option value="US Stocks">US Stocks</option>
+            <option value="JP Stocks">JP Stocks</option>
+            <option value="FX">FX</option>
+            <option value="Metals">Metals</option>
+            <option value="Other">Other</option>
           </select>
         </div>
-        <button class="add-submit" onclick="addSymbol()">&#36861;&#21152;&#12377;&#12427;</button>
+        <button class="add-submit" onclick="addSymbol()">Add</button>
       </div>
     </div>
   </div>
-
-  <!-- &#9472;&#9472; &#12500;&#12483;&#12463;&#12450;&#12483;&#12503;&#26465;&#20214;&#12479;&#12502; &#9472;&#9472; -->
-  <div class="tab-pane" id="tab-pickup">
-    <div class="section-head">&#26465;&#20214;&#12434;&#12377;&#12409;&#12390;&#28288;&#12383;&#12375;&#12383;&#37528;&#26564;&#12364;&#12500;&#12483;&#12463;&#12450;&#12483;&#12503;&#12373;&#12428;&#12414;&#12377;</div>
+  <div class="pane" id="pane-pickup">
     <div class="cond-list">
       <div class="cond-card">
-        <div class="cond-label">MTF&#12473;&#12467;&#12450; &#38334;&#20516;</div>
-        <div class="cond-val" id="mtf-val">70<span>pt &#20197;&#19978;</span></div>
-        <input type="range" id="mtf-slider" min="10" max="100" step="5" value="70"
-               oninput="document.getElementById('mtf-val').innerHTML=this.value+'<span>pt &#20197;&#19978;</span>';markDirty()">
+        <div class="cond-label">MTF Score threshold</div>
+        <div class="cond-val" id="mtf-val">70<span>pt+</span></div>
+        <input type="range" id="mtf-slider" min="10" max="100" step="5" value="70" oninput="document.getElementById('mtf-val').innerHTML=this.value+'<span>pt+</span>';markDirty()">
       </div>
       <div class="cond-card">
-        <div class="cond-label">TF&#19968;&#33268;&#25968; &#26368;&#20302;&#26412;&#25968;</div>
-        <div class="cond-val" id="tf-agree-val">3<span>&#26412; &#20197;&#19978;</span></div>
-        <input type="range" id="tf-agree-slider" min="1" max="4" step="1" value="3"
-               oninput="document.getElementById('tf-agree-val').innerHTML=this.value+'<span>&#26412; &#20197;&#19978;</span>';markDirty()">
+        <div class="cond-label">Min TF agreement</div>
+        <div class="cond-val" id="agree-val">3<span> TF</span></div>
+        <input type="range" id="agree-slider" min="1" max="5" step="1" value="3" oninput="document.getElementById('agree-val').innerHTML=this.value+'<span> TF</span>';markDirty()">
       </div>
       <div class="cond-card">
-        <div class="cond-toggle-row">
-          <span class="cond-toggle-label">&#12480;&#12454;&#29702;&#35542;&#12488;&#12524;&#12531;&#12489;&#30906;&#35469;&#12434;&#24517;&#38920;&#12395;&#12377;&#12427;</span>
-          <label class="toggle">
-            <input type="checkbox" id="req-dow" checked onchange="markDirty()">
-            <span class="toggle-track"></span>
-          </label>
+        <div class="tog-row"><span class="tog-label">Require Dow trend</span>
+          <label class="toggle"><input type="checkbox" id="req-dow" checked onchange="markDirty()"><span class="ttrack"></span></label>
         </div>
       </div>
       <div class="cond-card">
-        <div class="cond-toggle-row">
-          <span class="cond-toggle-label">ST&#12392;&#12480;&#12454;&#29702;&#35542;&#12398;&#26041;&#21521;&#19968;&#33268;&#12434;&#24517;&#38920;&#12395;&#12377;&#12427;</span>
-          <label class="toggle">
-            <input type="checkbox" id="req-st" checked onchange="markDirty()">
-            <span class="toggle-track"></span>
-          </label>
+        <div class="tog-row"><span class="tog-label">Require ST align</span>
+          <label class="toggle"><input type="checkbox" id="req-st" checked onchange="markDirty()"><span class="ttrack"></span></label>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- &#9472;&#9472; &#12479;&#12452;&#12512;&#12501;&#12524;&#12540;&#12512;&#12479;&#12502; &#9472;&#9472; -->
-  <div class="tab-pane" id="tab-tf">
-    <div class="section-head">&#20351;&#29992;&#12377;&#12427;&#12479;&#12452;&#12512;&#12501;&#12524;&#12540;&#12512;&#12392;&#37325;&#12415;&#12434;&#35373;&#23450;</div>
-    <div class="tf-list" id="tf-list"></div>
-  </div>
-
-  <!-- &#9472;&#9472; ST&#35373;&#23450;&#12479;&#12502; &#9472;&#9472; -->
-  <div class="tab-pane" id="tab-st">
-    <div class="section-head">&#12473;&#12540;&#12497;&#12540;&#12488;&#12524;&#12531;&#12489;&#12398;&#12497;&#12521;&#12513;&#12540;&#12479;</div>
-    <div class="st-section">
-      <div class="st-card">
-        <div>
-          <div class="cond-label">ATR&#26399;&#38291;</div>
-          <div class="cond-val" id="atr-val">10<span>&#26412;</span></div>
-          <input type="range" id="atr-slider" min="5" max="30" step="1" value="10"
-                 oninput="document.getElementById('atr-val').innerHTML=this.value+'<span>&#26412;</span>';markDirty()">
-        </div>
-        <div>
-          <div class="cond-label">&#20055;&#25968;&#65288;&#12496;&#12531;&#12489;&#24133;&#65289;</div>
-          <div class="cond-val" id="mult-val">3.0<span>&#215;</span></div>
-          <input type="range" id="mult-slider" min="1.0" max="6.0" step="0.5" value="3.0"
-                 oninput="document.getElementById('mult-val').innerHTML=parseFloat(this.value).toFixed(1)+'<span>&#215;</span>';markDirty()">
-        </div>
+  <div class="pane" id="pane-tf"><div class="tf-list" id="tf-list"></div></div>
+  <div class="pane" id="pane-st">
+    <div class="st-section"><div class="st-card">
+      <div>
+        <div class="cond-label">ATR Period</div>
+        <div class="cond-val" id="atr-val">10<span> bars</span></div>
+        <input type="range" id="atr-slider" min="5" max="30" step="1" value="10" oninput="document.getElementById('atr-val').innerHTML=this.value+'<span> bars</span>';markDirty()">
       </div>
-    </div>
+      <div>
+        <div class="cond-label">Multiplier</div>
+        <div class="cond-val" id="mult-val">3.0<span>x</span></div>
+        <input type="range" id="mult-slider" min="1.0" max="6.0" step="0.5" value="3.0" oninput="document.getElementById('mult-val').innerHTML=parseFloat(this.value).toFixed(1)+'<span>x</span>';markDirty()">
+      </div>
+    </div></div>
   </div>
 </main>
-
 <div id="toast"></div>
-
 <script>
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  &#29366;&#24907;&#31649;&#29702;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-var cfg = null;   // &#12525;&#12540;&#12489;&#12375;&#12383;config
-var dirty = false;
-
-function markDirty() {
-  dirty = true;
-  document.getElementById('save-btn').disabled = false;
-  document.getElementById('save-status').textContent = '&#26410;&#20445;&#23384;&#12398;&#22793;&#26356;&#12364;&#12354;&#12426;&#12414;&#12377;';
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  &#12479;&#12502;&#20999;&#12426;&#26367;&#12360;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  GitHub &#35373;&#23450;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-function getGhRepo()  { return document.getElementById('gh-repo').value.trim(); }
-function getGhToken() { return document.getElementById('gh-token').value.trim(); }
-
-function onGhChange() {
-  var repo  = getGhRepo();
-  var token = getGhToken();
-  localStorage.setItem('gh_repo',  repo);
-  localStorage.setItem('gh_token', token);
-  if (repo && token) {
-    document.getElementById('gh-status').textContent = '&#10003; &#35373;&#23450;&#28168;&#12415; &#8212; &#35501;&#12415;&#36796;&#12415;&#12508;&#12479;&#12531;&#12391;&#26368;&#26032;&#12434;&#21462;&#24471;&#12391;&#12365;&#12414;&#12377;';
-    loadFromGitHub();
-  }
-}
-
-function restoreGhSettings() {
-  var repo  = localStorage.getItem('gh_repo')  || '';
-  var token = localStorage.getItem('gh_token') || '';
-  document.getElementById('gh-repo').value  = repo;
-  document.getElementById('gh-token').value = token;
-  if (repo && token) loadFromGitHub();
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  GitHub API &#8212; &#35501;&#12415;&#36796;&#12415;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-async function loadFromGitHub() {
-  var repo  = getGhRepo();
-  var token = getGhToken();
-  if (!repo || !token) return;
-
-  document.getElementById('save-status').textContent = '&#35501;&#12415;&#36796;&#12415;&#20013;...';
-  try {
-    var res = await fetch(
-      'https://api.github.com/repos/' + repo + '/contents/config.json',
-      { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' } }
-    );
-    if (res.status === 404) {
-      // &#12501;&#12449;&#12452;&#12523;&#12364;&#12394;&#12369;&#12428;&#12400;&#12487;&#12501;&#12457;&#12523;&#12488;&#35373;&#23450;&#12434;&#20351;&#29992;
-      document.getElementById('save-status').textContent = 'config.json &#12364;&#35211;&#12388;&#12363;&#12426;&#12414;&#12379;&#12435;&#65288;&#21021;&#22238;&#20445;&#23384;&#12391;&#20316;&#25104;&#12373;&#12428;&#12414;&#12377;&#65289;';
-      renderAll(getDefaultConfig());
-      document.getElementById('run-btn').disabled = false;
-      return;
-    }
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
-    var json = JSON.parse(atob(data.content.replace(/\n/g,'')));
-    renderAll(json);
-    document.getElementById('save-status').textContent = '&#35501;&#12415;&#36796;&#12415;&#23436;&#20102; &#10003;';
-    document.getElementById('save-btn').disabled = false;
-    document.getElementById('run-btn').disabled = false;
-    showToast('&#35373;&#23450;&#12434;&#35501;&#12415;&#36796;&#12415;&#12414;&#12375;&#12383;', 'ok');
-  } catch(e) {
-    document.getElementById('save-status').textContent = '&#12456;&#12521;&#12540;: ' + e.message;
-    showToast('&#35501;&#12415;&#36796;&#12415;&#22833;&#25943;: ' + e.message, 'err');
-  }
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  GitHub API &#8212; &#20445;&#23384;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-async function triggerAction() {
-  var repo  = getGhRepo();
-  var token = getGhToken();
-  if (!repo || !token) { showToast('&#12522;&#12509;&#12472;&#12488;&#12522;&#12392;Token&#12434;&#20837;&#21147;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;', 'err'); return; }
-  var btn = document.getElementById('run-btn');
-  btn.textContent = '&#23455;&#34892;&#20013;...'; btn.disabled = true;
-  try {
-    var res = await fetch(
-      'https://api.github.com/repos/' + repo + '/actions/workflows/analyze.yml/dispatches',
-      {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: 'main' })
-      }
-    );
-    if (res.status === 204) {
-      showToast('&#9654; GitHub Actions&#12434;&#36215;&#21205;&#12375;&#12414;&#12375;&#12383;', 'ok');
-      document.getElementById('save-status').textContent = '&#20998;&#26512;&#23455;&#34892;&#20013;... &#25968;&#20998;&#24460;&#12395;report.html&#12364;&#26356;&#26032;&#12373;&#12428;&#12414;&#12377;';
-    } else {
-      var txt = await res.text();
-      throw new Error('HTTP ' + res.status + ' ' + txt.slice(0, 60));
-    }
-  } catch(e) {
-    showToast('&#23455;&#34892;&#22833;&#25943;: ' + e.message, 'err');
-  } finally {
-    btn.textContent = '&#9654; &#23455;&#34892;'; btn.disabled = false;
-  }
-}
-
-async function saveToGitHub() {
-  var repo  = getGhRepo();
-  var token = getGhToken();
-  if (!repo || !token) { showToast('&#12522;&#12509;&#12472;&#12488;&#12522;&#12392;Token&#12434;&#20837;&#21147;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;', 'err'); return; }
-
-  var btn = document.getElementById('save-btn');
-  btn.textContent = '&#20445;&#23384;&#20013;...'; btn.disabled = true;
-
-  try {
-    // &#29694;&#22312;&#12398;SHA&#12434;&#21462;&#24471;
-    var sha = null;
-    var headRes = await fetch(
-      'https://api.github.com/repos/' + repo + '/contents/config.json',
-      { headers: { 'Authorization': 'Bearer ' + token } }
-    );
-    if (headRes.ok) sha = (await headRes.json()).sha;
-
-    var json = buildConfig();
-    var body = { message: 'Update config.json via admin UI', content: btoa(unescape(encodeURIComponent(JSON.stringify(json, null, 2)))) };
-    if (sha) body.sha = sha;
-
-    var res = await fetch(
-      'https://api.github.com/repos/' + repo + '/contents/config.json',
-      { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-    );
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + (await res.text()).slice(0,80));
-
-    dirty = false;
-    btn.textContent = '&#20445;&#23384;';
-    document.getElementById('save-status').textContent = '&#20445;&#23384;&#28168;&#12415; &#10003; ' + new Date().toLocaleTimeString('ja-JP');
-    showToast('GitHub&#12395;&#20445;&#23384;&#12375;&#12414;&#12375;&#12383; &#10003;', 'ok');
-  } catch(e) {
-    btn.textContent = '&#20445;&#23384;'; btn.disabled = false;
-    showToast('&#20445;&#23384;&#22833;&#25943;: ' + e.message, 'err');
-  }
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  UI &#8212; &#25551;&#30011;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-function renderAll(json) {
-  cfg = JSON.parse(JSON.stringify(json));
-  renderSymbols(cfg.symbols);
-  renderPickup(cfg.pickup_conditions);
-  renderTF(cfg.timeframes);
-  renderST(cfg.supertrend_params);
-  dirty = false;
-}
-
-// &#9472;&#9472; &#37528;&#26564; &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
-function renderSymbols(symbols) {
-  var cats = {};
-  symbols.forEach(function(s, i) {
-    if (!cats[s.category]) cats[s.category] = [];
-    cats[s.category].push({sym: s, idx: i});
-  });
-  var html = '';
-  Object.keys(cats).forEach(function(cat) {
-    html += '<div class="section-head">' + cat + '</div>';
-    html += '<div class="symbol-list">';
-    cats[cat].forEach(function(item) {
-      var i = item.idx; var s = item.sym;
-      html += '<div class="symbol-row' + (s.enabled ? '' : ' disabled') + '" id="sym-row-' + i + '">' +
-        '<div class="sym-info">' +
-          '<div class="sym-name">' + s.name + '</div>' +
-          '<div class="sym-ticker">' + s.ticker + '</div>' +
-          '<span class="sym-cat">' + s.category + '</span>' +
-        '</div>' +
-        '<div class="sym-actions">' +
-          '<label class="toggle">' +
-            '<input type="checkbox"' + (s.enabled ? ' checked' : '') + ' onchange="toggleSymbol(' + i + ',this.checked)">' +
-            '<span class="toggle-track"></span>' +
-          '</label>' +
-          '<button class="del-btn" onclick="deleteSymbol(' + i + ')">&#215;</button>' +
-        '</div>' +
-      '</div>';
-    });
-    html += '</div>';
-  });
-  document.getElementById('symbol-sections').innerHTML = html;
-}
-
-function toggleSymbol(i, val) {
-  cfg.symbols[i].enabled = val;
-  var row = document.getElementById('sym-row-' + i);
-  if (row) { row.classList.toggle('disabled', !val); }
-  markDirty();
-}
-
-function deleteSymbol(i) {
-  var name = cfg.symbols[i].name;
-  if (!confirm('&#12300;' + name + '&#12301;&#12434;&#21066;&#38500;&#12375;&#12414;&#12377;&#12363;&#65311;')) return;
-  cfg.symbols.splice(i, 1);
-  renderSymbols(cfg.symbols);
-  markDirty();
-}
-
-function addSymbol() {
-  var name   = document.getElementById('new-name').value.trim();
-  var ticker = document.getElementById('new-ticker').value.trim().toUpperCase();
-  var cat    = document.getElementById('new-cat').value;
-  if (!name || !ticker) { showToast('&#34920;&#31034;&#21517;&#12392;&#12486;&#12451;&#12483;&#12459;&#12540;&#12434;&#20837;&#21147;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;', 'err'); return; }
-  cfg.symbols.push({ name: name, ticker: ticker, category: cat, enabled: true });
-  renderSymbols(cfg.symbols);
-  document.getElementById('new-name').value   = '';
-  document.getElementById('new-ticker').value = '';
-  toggleAddForm(false);
-  markDirty();
-  showToast(name + ' &#12434;&#36861;&#21152;&#12375;&#12414;&#12375;&#12383;', 'ok');
-}
-
-var addFormOpen = false;
-function toggleAddForm(force) {
-  addFormOpen = force !== undefined ? force : !addFormOpen;
-  document.getElementById('add-form-body').classList.toggle('hidden', !addFormOpen);
-  document.getElementById('add-arrow').textContent = addFormOpen ? '&#9650;' : '&#9660;';
-}
-
-// &#9472;&#9472; &#12500;&#12483;&#12463;&#12450;&#12483;&#12503;&#26465;&#20214; &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
-function renderPickup(cond) {
-  document.getElementById('mtf-slider').value    = cond.mtf_score_threshold;
-  document.getElementById('mtf-val').innerHTML   = cond.mtf_score_threshold + '<span>pt &#20197;&#19978;</span>';
-  document.getElementById('tf-agree-slider').value = cond.min_tf_agreement;
-  document.getElementById('tf-agree-val').innerHTML = cond.min_tf_agreement + '<span>&#26412; &#20197;&#19978;</span>';
-  document.getElementById('req-dow').checked = cond.require_dow_trend;
-  document.getElementById('req-st').checked  = cond.require_supertrend_align;
-}
-
-// &#9472;&#9472; &#12479;&#12452;&#12512;&#12501;&#12524;&#12540;&#12512; &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
-function renderTF(tfs) {
-  var html = '';
-  tfs.forEach(function(tf, i) {
-    html += '<div class="tf-row">' +
-      '<div class="tf-info">' +
-        '<div class="tf-name">' + tf.label + '</div>' +
-        '<div class="tf-detail">interval: ' + tf.interval + '  period: ' + tf.period + '</div>' +
-        '<div class="weight-row">' +
-          '<span class="weight-label">&#37325;&#12415;</span>' +
-          '<input type="range" min="1" max="5" step="1" value="' + tf.weight + '" style="flex:1;margin:0 8px;"' +
-            ' oninput="updateTFWeight(' + i + ',this.value);document.getElementById(\'w' + i + '\').textContent=this.value">' +
-          '<span class="weight-val" id="w' + i + '">' + tf.weight + '</span>' +
-        '</div>' +
-      '</div>' +
-      '<label class="toggle">' +
-        '<input type="checkbox"' + (tf.enabled ? ' checked' : '') + ' onchange="toggleTF(' + i + ',this.checked)">' +
-        '<span class="toggle-track"></span>' +
-      '</label>' +
-    '</div>';
-  });
-  document.getElementById('tf-list').innerHTML = html;
-}
-
-function toggleTF(i, val) { cfg.timeframes[i].enabled = val; markDirty(); }
-function updateTFWeight(i, val) { cfg.timeframes[i].weight = parseInt(val); markDirty(); }
-
-// &#9472;&#9472; ST&#35373;&#23450; &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
-function renderST(params) {
-  document.getElementById('atr-slider').value = params.atr_period;
-  document.getElementById('atr-val').innerHTML = params.atr_period + '<span>&#26412;</span>';
-  document.getElementById('mult-slider').value = params.multiplier;
-  document.getElementById('mult-val').innerHTML = parseFloat(params.multiplier).toFixed(1) + '<span>&#215;</span>';
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  config &#32068;&#12415;&#31435;&#12390;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-function buildConfig() {
-  return {
-    symbols: cfg.symbols,
-    timeframes: cfg.timeframes.map(function(tf, i) {
-      var slider = document.querySelector('#tf-list .tf-row:nth-child(' + (i+1) + ') input[type=range]');
-      return Object.assign({}, tf, { weight: parseInt(slider ? slider.value : tf.weight) });
-    }),
-    pickup_conditions: {
-      mtf_score_threshold:    parseInt(document.getElementById('mtf-slider').value),
-      min_tf_agreement:       parseInt(document.getElementById('tf-agree-slider').value),
-      require_dow_trend:      document.getElementById('req-dow').checked,
-      require_supertrend_align: document.getElementById('req-st').checked,
-    },
-    supertrend_params: {
-      atr_period:  parseInt(document.getElementById('atr-slider').value),
-      multiplier:  parseFloat(document.getElementById('mult-slider').value),
-    }
-  };
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  &#12487;&#12501;&#12457;&#12523;&#12488;&#35373;&#23450;&#65288;&#21021;&#22238; / fallback&#65289;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-function getDefaultConfig() {
-  return {
-    symbols: [
-      {"name":"&#12468;&#12540;&#12523;&#12489;",   "ticker":"GC=F",    "category":"&#36020;&#37329;&#23646;","enabled":true},
-      {"name":"USD/JPY",   "ticker":"JPY=X",   "category":"&#28858;&#26367;",  "enabled":true},
-      {"name":"S&P500 ETF","ticker":"SPY",     "category":"&#31859;&#22269;&#26666;","enabled":true},
-      {"name":"NASDAQ ETF","ticker":"QQQ",     "category":"&#31859;&#22269;&#26666;","enabled":true},
-      {"name":"&#26085;&#32076;225",   "ticker":"^N225",   "category":"&#26085;&#26412;&#26666;","enabled":true}
-    ],
-    timeframes: [
-      {"label":"&#36913;&#36275;", "interval":"1wk","period":"2y", "weight":4,"enabled":true},
-      {"label":"&#26085;&#36275;", "interval":"1d", "period":"1y", "weight":3,"enabled":true},
-      {"label":"4&#26178;&#38291;","interval":"1h", "period":"60d","weight":2,"enabled":true},
-      {"label":"1&#26178;&#38291;","interval":"1h", "period":"30d","weight":1,"enabled":true},
-      {"label":"15&#20998;", "interval":"15m","period":"60d","weight":1,"enabled":true}
-    ],
-    pickup_conditions: {
-      "mtf_score_threshold":70,"min_tf_agreement":3,
-      "require_dow_trend":true,"require_supertrend_align":true
-    },
-    supertrend_params: { "atr_period":10, "multiplier":3.0 }
-  };
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  &#12488;&#12540;&#12473;&#12488;&#36890;&#30693;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-var toastTimer = null;
-function showToast(msg, type) {
-  var el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className   = 'show ' + (type || '');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(function() { el.className = ''; }, 2800);
-}
-
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-//  &#21021;&#26399;&#21270;
-// &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-window.addEventListener('DOMContentLoaded', function() {
-  restoreGhSettings();
-});
+var cfg=null,dirty=false;
+function switchTab(n,btn){document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('pane-'+n).classList.add('active');}
+function getRepo(){return document.getElementById('gh-repo').value.trim();}
+function getToken(){return document.getElementById('gh-token').value.trim();}
+function setStatus(m){document.getElementById('hstatus').textContent=m;}
+function enableButtons(){document.getElementById('btn-save').disabled=false;document.getElementById('btn-run').disabled=false;}
+function markDirty(){dirty=true;document.getElementById('btn-save').disabled=false;setStatus('Unsaved changes');}
+function onGhChange(){var r=getRepo(),t=getToken();localStorage.setItem('gh_repo',r);localStorage.setItem('gh_token',t);if(r&&t)loadFromGitHub();}
+function restoreGh(){var r=localStorage.getItem('gh_repo')||'',t=localStorage.getItem('gh_token')||'';document.getElementById('gh-repo').value=r;document.getElementById('gh-token').value=t;if(r&&t)loadFromGitHub();}
+async function loadFromGitHub(){var r=getRepo(),t=getToken();if(!r||!t)return;setStatus('Loading...');try{var res=await fetch('https://api.github.com/repos/'+r+'/contents/config.json',{headers:{'Authorization':'Bearer '+t}});if(res.status===404){setStatus('config.json not found');renderAll(defaultConfig());enableButtons();return;}if(!res.ok)throw new Error('HTTP '+res.status);var data=await res.json();var json=JSON.parse(atob(data.content.replace(/\n/g,'')));renderAll(json);enableButtons();setStatus('Loaded \u2713');toast('Config loaded','ok');}catch(e){setStatus('Error: '+e.message);toast('Load failed: '+e.message,'err');}}
+async function saveToGitHub(){var r=getRepo(),t=getToken();if(!r||!t){toast('Enter repo and token','err');return;}var btn=document.getElementById('btn-save');btn.textContent='...';btn.disabled=true;try{var sha=null;var head=await fetch('https://api.github.com/repos/'+r+'/contents/config.json',{headers:{'Authorization':'Bearer '+t}});if(head.ok)sha=(await head.json()).sha;var json=buildConfig();var body={message:'Update config.json via admin UI',content:btoa(unescape(encodeURIComponent(JSON.stringify(json,null,2))))};if(sha)body.sha=sha;var res=await fetch('https://api.github.com/repos/'+r+'/contents/config.json',{method:'PUT',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw new Error('HTTP '+res.status);dirty=false;btn.textContent='Save';setStatus('Saved \u2713 '+new Date().toLocaleTimeString());toast('Saved to GitHub \u2713','ok');}catch(e){btn.textContent='Save';btn.disabled=false;toast('Save failed: '+e.message,'err');}}
+async function triggerAction(){var r=getRepo(),t=getToken();if(!r||!t){toast('Enter repo and token','err');return;}var btn=document.getElementById('btn-run');btn.textContent='...';btn.disabled=true;try{var res=await fetch('https://api.github.com/repos/'+r+'/actions/workflows/analyze.yml/dispatches',{method:'POST',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({ref:'main'})});if(res.status===204){toast('Actions triggered \u2713','ok');setStatus('Analysis running...');}else{throw new Error('HTTP '+res.status);}}catch(e){toast('Trigger failed: '+e.message,'err');}finally{btn.textContent='\u25BA Run';btn.disabled=false;}}
+function renderAll(json){cfg=JSON.parse(JSON.stringify(json));renderSymbols(cfg.symbols);renderPickup(cfg.pickup_conditions);renderTF(cfg.timeframes);renderST(cfg.supertrend_params);dirty=false;}
+function renderSymbols(symbols){var cats={};symbols.forEach(function(s,i){if(!cats[s.category])cats[s.category]=[];cats[s.category].push({s:s,i:i});});var html='';Object.keys(cats).forEach(function(cat){html+='<div class="sec-head">'+cat+'</div><div class="sym-list">';cats[cat].forEach(function(item){var s=item.s,i=item.i;html+='<div class="sym-row'+(s.enabled?'':' off')+'" id="sr'+i+'"><div class="sym-info"><div class="sym-name">'+s.name+'</div><div class="sym-ticker">'+s.ticker+'</div><span class="sym-cat">'+s.category+'</span></div><div class="sym-actions"><label class="toggle"><input type="checkbox"'+(s.enabled?' checked':'')+' onchange="toggleSym('+i+',this.checked)"><span class="ttrack"></span></label><button class="del-btn" onclick="delSym('+i+')">&#215;</button></div></div>';});html+='</div>';});document.getElementById('sym-sections').innerHTML=html;}
+function toggleSym(i,v){cfg.symbols[i].enabled=v;var r=document.getElementById('sr'+i);if(r)r.classList.toggle('off',!v);markDirty();}
+function delSym(i){if(!confirm('Delete "'+cfg.symbols[i].name+'"?'))return;cfg.symbols.splice(i,1);renderSymbols(cfg.symbols);markDirty();}
+function addSymbol(){var name=document.getElementById('new-name').value.trim();var ticker=document.getElementById('new-ticker').value.trim().toUpperCase();var cat=document.getElementById('new-cat').value;if(!name||!ticker){toast('Enter name and ticker','err');return;}cfg.symbols.push({name:name,ticker:ticker,category:cat,enabled:true});renderSymbols(cfg.symbols);document.getElementById('new-name').value='';document.getElementById('new-ticker').value='';toggleAdd(false);markDirty();toast('Added: '+name,'ok');}
+var addOpen=false;
+function toggleAdd(force){addOpen=force!==undefined?force:!addOpen;document.getElementById('add-body').classList.toggle('hidden',!addOpen);document.getElementById('add-arrow').textContent=addOpen?'\u25B2':'\u25BC';}
+function renderPickup(c){document.getElementById('mtf-slider').value=c.mtf_score_threshold;document.getElementById('mtf-val').innerHTML=c.mtf_score_threshold+'<span>pt+</span>';document.getElementById('agree-slider').value=c.min_tf_agreement;document.getElementById('agree-val').innerHTML=c.min_tf_agreement+'<span> TF</span>';document.getElementById('req-dow').checked=c.require_dow_trend;document.getElementById('req-st').checked=c.require_supertrend_align;}
+function renderTF(tfs){var html='';tfs.forEach(function(tf,i){html+='<div class="tf-row"><div class="tf-info"><div class="tf-name">'+tf.label+'</div><div class="tf-detail">'+tf.interval+' / '+tf.period+'</div><div class="wrow"><span class="wlabel">Weight</span><input type="range" min="1" max="5" step="1" value="'+tf.weight+'" style="flex:1;margin:0 8px" oninput="updateWeight('+i+',this.value);document.getElementById(\'wv'+i+'\').textContent=this.value"><span class="wval" id="wv'+i+'">'+tf.weight+'</span></div></div><label class="toggle"><input type="checkbox"'+(tf.enabled?' checked':'')+' onchange="toggleTF('+i+',this.checked)"><span class="ttrack"></span></label></div>';});document.getElementById('tf-list').innerHTML=html;}
+function toggleTF(i,v){cfg.timeframes[i].enabled=v;markDirty();}
+function updateWeight(i,v){cfg.timeframes[i].weight=parseInt(v);markDirty();}
+function renderST(p){document.getElementById('atr-slider').value=p.atr_period;document.getElementById('atr-val').innerHTML=p.atr_period+'<span> bars</span>';document.getElementById('mult-slider').value=p.multiplier;document.getElementById('mult-val').innerHTML=parseFloat(p.multiplier).toFixed(1)+'<span>x</span>';}
+function buildConfig(){return{symbols:cfg.symbols,timeframes:cfg.timeframes,pickup_conditions:{mtf_score_threshold:parseInt(document.getElementById('mtf-slider').value),min_tf_agreement:parseInt(document.getElementById('agree-slider').value),require_dow_trend:document.getElementById('req-dow').checked,require_supertrend_align:document.getElementById('req-st').checked},supertrend_params:{atr_period:parseInt(document.getElementById('atr-slider').value),multiplier:parseFloat(document.getElementById('mult-slider').value)}};}
+function defaultConfig(){return{symbols:[{name:'Gold',ticker:'GC=F',category:'Metals',enabled:true},{name:'Silver',ticker:'SI=F',category:'Metals',enabled:true},{name:'USD/JPY',ticker:'JPY=X',category:'FX',enabled:true},{name:'EUR/USD',ticker:'EURUSD=X',category:'FX',enabled:true},{name:'SPY',ticker:'SPY',category:'US Stocks',enabled:true},{name:'QQQ',ticker:'QQQ',category:'US Stocks',enabled:true},{name:'NVIDIA',ticker:'NVDA',category:'US Stocks',enabled:true},{name:'Nikkei225',ticker:'^N225',category:'JP Stocks',enabled:true},{name:'Toyota',ticker:'7203.T',category:'JP Stocks',enabled:true},{name:'MUFG',ticker:'8306.T',category:'JP Stocks',enabled:true}],timeframes:[{label:'Weekly',interval:'1wk',period:'2y',weight:4,enabled:true},{label:'Daily',interval:'1d',period:'1y',weight:3,enabled:true},{label:'4H',interval:'1h',period:'60d',weight:2,enabled:true},{label:'1H',interval:'1h',period:'30d',weight:1,enabled:true},{label:'15M',interval:'15m',period:'60d',weight:1,enabled:true}],pickup_conditions:{mtf_score_threshold:70,min_tf_agreement:3,require_dow_trend:true,require_supertrend_align:true},supertrend_params:{atr_period:10,multiplier:3.0}};}
+var _tt=null;
+function toast(msg,type){var el=document.getElementById('toast');el.textContent=msg;el.className='show '+(type||'');if(_tt)clearTimeout(_tt);_tt=setTimeout(function(){el.className='';},2800);}
+window.addEventListener('DOMContentLoaded',restoreGh);
 </script>
 </body>
 </html>
