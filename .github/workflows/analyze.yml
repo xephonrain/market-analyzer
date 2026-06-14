@@ -1,47 +1,36 @@
 name: Market Analysis
 
 on:
-  # 朝 8:00 JST (23:00 UTC)、昼 12:00 JST (03:00 UTC)、晩 20:00 JST (11:00 UTC)
   schedule:
-    - cron: '0 23 * * *'   # 朝  08:00 JST
-    - cron: '0 3  * * *'   # 昼  12:00 JST
-    - cron: '0 11 * * *'   # 晩  20:00 JST
+    - cron: '0 23 * * *'   # 朝 08:00 JST
+    - cron: '0 3  * * *'   # 昼 12:00 JST
+    - cron: '0 11 * * *'   # 晩 20:00 JST
 
-  # admin.html から config.json が更新されたとき自動トリガー
   push:
     paths:
       - 'config.json'
 
-  # 手動実行ボタン（GitHub ActionsのUIから）
   workflow_dispatch:
 
 jobs:
   analyze:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # output/report.html をcommitするために必要
+      contents: write
 
     steps:
-      # ── リポジトリをチェックアウト ──────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── Python セットアップ ─────────────────────────────
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      # ── 依存パッケージインストール ──────────────────────
       - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install yfinance pandas numpy plotly lightweight-charts 2>/dev/null || true
-          # lightweight-chartsはPythonパッケージではないためエラーを無視
-          pip install yfinance pandas numpy
+        run: pip install yfinance pandas numpy
 
-      # ── lw_charts.js がなければnpmで取得 ────────────────
       - name: Fetch Lightweight Charts JS
         run: |
           if [ ! -f "lw_charts.js" ]; then
@@ -50,25 +39,43 @@ jobs:
             tar -xzf lightweight-charts-*.tgz
             cp package/dist/lightweight-charts.standalone.production.js lw_charts.js
             rm -rf package lightweight-charts-*.tgz
-            echo "lw_charts.js fetched successfully"
+            echo "lw_charts.js size: $(wc -c < lw_charts.js) bytes"
           else
-            echo "lw_charts.js already exists, skipping"
+            echo "lw_charts.js found: $(wc -c < lw_charts.js) bytes"
           fi
 
-      # ── 分析実行 ────────────────────────────────────────
-      - name: Run analysis
+      - name: Debug environment
         run: |
-          python analyze.py
+          echo "=== Working directory ==="
+          pwd
+          echo "=== Files in root ==="
+          ls -la
+          echo "=== Python path ==="
+          python -c "import sys; print(sys.path)"
+          echo "=== lw_charts.js check ==="
+          ls -lh lw_charts.js 2>/dev/null || echo "NOT FOUND"
+
+      - name: Run analysis
+        run: python analyze.py
         env:
           TZ: Asia/Tokyo
 
-      # ── 生成ファイルをコミット & プッシュ ───────────────
+      - name: Check output
+        run: |
+          echo "=== output/report.html ==="
+          ls -lh output/report.html 2>/dev/null || echo "NOT FOUND"
+          echo "=== LightweightCharts in HTML ==="
+          grep -c "LightweightCharts" output/report.html 2>/dev/null || echo "0"
+          echo "=== createChart in HTML ==="
+          grep -c "createChart" output/report.html 2>/dev/null || echo "0"
+          echo "=== チャートなし count ==="
+          grep -c "チャートなし" output/report.html 2>/dev/null || echo "0"
+
       - name: Commit report
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/report.html
-          # 変更がある場合のみコミット
+          git add output/report.html admin.html chart.py analyze.py report.py config_loader.py hot_stocks.py indicators/
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
