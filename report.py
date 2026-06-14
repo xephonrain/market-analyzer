@@ -356,7 +356,13 @@ def generate_html(all_results, pickup_list, chart_html_map=None,
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Market">
+  <meta name="theme-color" content="#0d1117">
+  <link rel="manifest" href="/market-analyzer/manifest.json">
+  <link rel="apple-touch-icon" href="/market-analyzer/icon-192.png">
   {refresh_meta}
   <title>{OUTPUT['title']}</title>
   <script>{lw_js}</script>
@@ -367,7 +373,7 @@ def generate_html(all_results, pickup_list, chart_html_map=None,
     *{{box-sizing:border-box;margin:0;padding:0;}}
     body{{background:var(--bg);color:var(--text);font-family:-apple-system,'Segoe UI',sans-serif;font-size:14px;}}
 
-    header{{background:var(--bg2);border-bottom:1px solid var(--border);padding:11px 14px;
+    header{{background:var(--bg2);border-bottom:1px solid var(--border);padding:11px 14px;padding-top:calc(11px + env(safe-area-inset-top,0px));
             display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;}}
     .htitle{{font-size:16px;font-weight:700;}}
     .hmeta{{margin-left:auto;display:flex;align-items:center;gap:10px;}}
@@ -375,7 +381,7 @@ def generate_html(all_results, pickup_list, chart_html_map=None,
     .hstat span{{color:var(--gold);font-weight:700;}}
     .htime{{font-size:11px;color:var(--text2);}}
 
-    main{{max-width:900px;margin:0 auto;padding:10px 12px 40px;}}
+    main{{max-width:900px;margin:0 auto;padding:10px 12px calc(40px + env(safe-area-inset-bottom,0px));}}
 
     /* Collapsible section */
     .collapsible-section{{background:var(--bg2);border:1px solid var(--border);
