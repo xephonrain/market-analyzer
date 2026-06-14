@@ -1,0 +1,34 @@
+{
+  "symbols": [
+    {"name": "ゴールド",    "ticker": "GC=F",    "category": "貴金属", "enabled": true},
+    {"name": "シルバー",    "ticker": "SI=F",    "category": "貴金属", "enabled": true},
+    {"name": "USD/JPY",    "ticker": "JPY=X",   "category": "為替",   "enabled": true},
+    {"name": "EUR/USD",    "ticker": "EURUSD=X","category": "為替",   "enabled": true},
+    {"name": "GBP/USD",    "ticker": "GBPUSD=X","category": "為替",   "enabled": false},
+    {"name": "S&P500 ETF", "ticker": "SPY",     "category": "米国株", "enabled": true},
+    {"name": "NASDAQ ETF", "ticker": "QQQ",     "category": "米国株", "enabled": true},
+    {"name": "Apple",      "ticker": "AAPL",    "category": "米国株", "enabled": false},
+    {"name": "NVIDIA",     "ticker": "NVDA",    "category": "米国株", "enabled": true},
+    {"name": "日経225",    "ticker": "^N225",   "category": "日本株", "enabled": true},
+    {"name": "トヨタ",     "ticker": "7203.T",  "category": "日本株", "enabled": true},
+    {"name": "ソニー",     "ticker": "6758.T",  "category": "日本株", "enabled": false},
+    {"name": "三菱UFJ",   "ticker": "8306.T",  "category": "日本株", "enabled": true}
+  ],
+  "timeframes": [
+    {"label": "週足",  "interval": "1wk", "period": "2y",  "weight": 4, "enabled": true},
+    {"label": "日足",  "interval": "1d",  "period": "1y",  "weight": 3, "enabled": true},
+    {"label": "4時間", "interval": "1h",  "period": "60d", "weight": 2, "enabled": true},
+    {"label": "1時間", "interval": "1h",  "period": "30d", "weight": 1, "enabled": true},
+    {"label": "15分",  "interval": "15m", "period": "60d", "weight": 1, "enabled": true}
+  ],
+  "pickup_conditions": {
+    "mtf_score_threshold": 70,
+    "min_tf_agreement": 3,
+    "require_dow_trend": true,
+    "require_supertrend_align": true
+  },
+  "supertrend_params": {
+    "atr_period": 10,
+    "multiplier": 3.0
+  }
+}
