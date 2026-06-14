@@ -2,8 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Admin">
+<meta name="theme-color" content="#0d1117">
 <title>Market Admin</title>
 <style>
 :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--up:#26a69a;--accent:#58a6ff;--down:#ef5350;--gold:#f0c040;}
@@ -105,7 +107,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <div class="add-body hidden" id="add-body">
         <div class="frow">
           <input id="new-name" type="text" placeholder="Display name">
-          <input id="new-ticker" type="text" placeholder="Ticker (e.g. TSLA)" autocapitalize="characters" autocorrect="off">
+          <input id="new-ticker" type="text" placeholder="TSLA / 7203.T / 998407.O" autocapitalize="characters" autocorrect="off" oninput="onTickerInput(this.value)">
         </div>
         <div class="frow">
           <select id="new-cat">
@@ -116,6 +118,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
             <option value="Other">Other</option>
           </select>
         </div>
+        <div id="ticker-hint" style="font-size:11px;color:var(--text2);min-height:14px;margin-top:-4px;"></div>
+        <div id="ticker-candidates" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:-4px;"></div>
         <button class="add-submit" onclick="addSymbol()">Add</button>
       </div>
     </div>
@@ -175,7 +179,7 @@ async function loadFromGitHub(){var r=getRepo(),t=getToken();if(!r||!t)return;se
 async function saveToGitHub(){var r=getRepo(),t=getToken();if(!r||!t){toast('Enter repo and token','err');return;}var btn=document.getElementById('btn-save');btn.textContent='...';btn.disabled=true;try{var sha=null;var head=await fetch('https://api.github.com/repos/'+r+'/contents/config.json',{headers:{'Authorization':'Bearer '+t}});if(head.ok)sha=(await head.json()).sha;var json=buildConfig();var body={message:'Update config.json via admin UI',content:btoa(unescape(encodeURIComponent(JSON.stringify(json,null,2))))};if(sha)body.sha=sha;var res=await fetch('https://api.github.com/repos/'+r+'/contents/config.json',{method:'PUT',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw new Error('HTTP '+res.status);dirty=false;btn.textContent='Save';setStatus('Saved \u2713 '+new Date().toLocaleTimeString());toast('Saved to GitHub \u2713','ok');}catch(e){btn.textContent='Save';btn.disabled=false;toast('Save failed: '+e.message,'err');}}
 async function triggerAction(){var r=getRepo(),t=getToken();if(!r||!t){toast('Enter repo and token','err');return;}var btn=document.getElementById('btn-run');btn.textContent='...';btn.disabled=true;try{var res=await fetch('https://api.github.com/repos/'+r+'/actions/workflows/analyze.yml/dispatches',{method:'POST',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({ref:'main'})});if(res.status===204){toast('Actions triggered \u2713','ok');setStatus('Analysis running...');}else{throw new Error('HTTP '+res.status);}}catch(e){toast('Trigger failed: '+e.message,'err');}finally{btn.textContent='\u25BA Run';btn.disabled=false;}}
 function renderAll(json){cfg=JSON.parse(JSON.stringify(json));renderSymbols(cfg.symbols);renderPickup(cfg.pickup_conditions);renderTF(cfg.timeframes);renderST(cfg.supertrend_params);dirty=false;}
-function renderSymbols(symbols){var cats={};symbols.forEach(function(s,i){if(!cats[s.category])cats[s.category]=[];cats[s.category].push({s:s,i:i});});var html='';Object.keys(cats).forEach(function(cat){html+='<div class="sec-head">'+cat+'</div><div class="sym-list">';cats[cat].forEach(function(item){var s=item.s,i=item.i;html+='<div class="sym-row'+(s.enabled?'':' off')+'" id="sr'+i+'"><div class="sym-info"><div class="sym-name">'+s.name+'</div><div class="sym-ticker">'+s.ticker+'</div><span class="sym-cat">'+s.category+'</span></div><div class="sym-actions"><label class="toggle"><input type="checkbox"'+(s.enabled?' checked':'')+' onchange="toggleSym('+i+',this.checked)"><span class="ttrack"></span></label><button class="del-btn" onclick="delSym('+i+')">&#215;</button></div></div>';});html+='</div>';});document.getElementById('sym-sections').innerHTML=html;}
+function renderSymbols(symbols){var cats={};symbols.forEach(function(s,i){if(!cats[s.category])cats[s.category]=[];cats[s.category].push({s:s,i:i});});var html='';Object.keys(cats).forEach(function(cat){html+='<div class="sec-head">'+cat+'</div><div class="sym-list">';cats[cat].forEach(function(item){var s=item.s,i=item.i;html+='<div class="sym-row'+(s.enabled?'':' off')+'" id="sr'+i+'"><div class="sym-info"><div class="sym-name">'+s.name+'</div><div class="sym-ticker">'+s.ticker+'</div><span class="sym-cat">'+s.category+'</span></div><div class="sym-actions"><label class="toggle"><input type="checkbox"'+(s.enabled?' checked':'')+' onchange="toggleSym('+i+',this.checked)"><span class="ttrack"></span></label><button class="del-btn" onclick="delSym('+i+')">x</button></div></div>';});html+='</div>';});document.getElementById('sym-sections').innerHTML=html;}
 function toggleSym(i,v){cfg.symbols[i].enabled=v;var r=document.getElementById('sr'+i);if(r)r.classList.toggle('off',!v);markDirty();}
 function delSym(i){if(!confirm('Delete "'+cfg.symbols[i].name+'"?'))return;cfg.symbols.splice(i,1);renderSymbols(cfg.symbols);markDirty();}
 function addSymbol(){var name=document.getElementById('new-name').value.trim();var ticker=document.getElementById('new-ticker').value.trim().toUpperCase();var cat=document.getElementById('new-cat').value;if(!name||!ticker){toast('Enter name and ticker','err');return;}cfg.symbols.push({name:name,ticker:ticker,category:cat,enabled:true});renderSymbols(cfg.symbols);document.getElementById('new-name').value='';document.getElementById('new-ticker').value='';toggleAdd(false);markDirty();toast('Added: '+name,'ok');}
@@ -190,6 +194,68 @@ function buildConfig(){return{symbols:cfg.symbols,timeframes:cfg.timeframes,pick
 function defaultConfig(){return{symbols:[{name:'Gold',ticker:'GC=F',category:'Metals',enabled:true},{name:'Silver',ticker:'SI=F',category:'Metals',enabled:true},{name:'USD/JPY',ticker:'JPY=X',category:'FX',enabled:true},{name:'EUR/USD',ticker:'EURUSD=X',category:'FX',enabled:true},{name:'SPY',ticker:'SPY',category:'US Stocks',enabled:true},{name:'QQQ',ticker:'QQQ',category:'US Stocks',enabled:true},{name:'NVIDIA',ticker:'NVDA',category:'US Stocks',enabled:true},{name:'Nikkei225',ticker:'^N225',category:'JP Stocks',enabled:true},{name:'Toyota',ticker:'7203.T',category:'JP Stocks',enabled:true},{name:'MUFG',ticker:'8306.T',category:'JP Stocks',enabled:true}],timeframes:[{label:'Weekly',interval:'1wk',period:'2y',weight:4,enabled:true},{label:'Daily',interval:'1d',period:'1y',weight:3,enabled:true},{label:'4H',interval:'1h',period:'60d',weight:2,enabled:true},{label:'1H',interval:'1h',period:'30d',weight:1,enabled:true},{label:'15M',interval:'15m',period:'60d',weight:1,enabled:true}],pickup_conditions:{mtf_score_threshold:70,min_tf_agreement:3,require_dow_trend:true,require_supertrend_align:true},supertrend_params:{atr_period:10,multiplier:3.0}};}
 var _tt=null;
 function toast(msg,type){var el=document.getElementById('toast');el.textContent=msg;el.className='show '+(type||'');if(_tt)clearTimeout(_tt);_tt=setTimeout(function(){el.className='';},2800);}
+
+// -- Ticker conversion --
+var JP_SPECIAL = {
+  '998407':'^N225','998405':'^TOPX','998402':'^NKY',
+  '1306':'1306.T','1321':'1321.T','1330':'1330.T',
+  '2516':'2516.T','1547':'1547.T','1546':'1546.T'
+};
+
+function convertTicker(raw) {
+  raw = raw.trim().toUpperCase();
+  var parts = raw.split('.');
+  var base  = parts[0];
+  var suf   = parts[1] || '';
+
+  // Special JP index codes
+  if (JP_SPECIAL[base]) {
+    return { ticker: JP_SPECIAL[base], note: 'Japanese index symbol', converted: true };
+  }
+  // Convert .O/.OS to .T
+  if (['O','OS','OS2'].includes(suf)) {
+    return { ticker: base + '.T', note: 'Converted .O to .T (Yahoo Finance format)', converted: true };
+  }
+  // 4-digit number -> JP Stock, add .T
+  if (/^\d{4}$/.test(base) && !suf) {
+    return { ticker: base + '.T', note: 'Added .T suffix for JP Stock', converted: true };
+  }
+  // 5-6 digit number -> suggest as-is
+  if (/^\d{5,6}$/.test(base) && !suf) {
+    return { ticker: raw, note: 'Try as-is or check Yahoo Finance for correct ticker', converted: false };
+  }
+  return { ticker: raw, note: '', converted: false };
+}
+
+function onTickerInput(val) {
+  var hint  = document.getElementById('ticker-hint');
+  var cands = document.getElementById('ticker-candidates');
+  if (!val || val.length < 2) {
+    hint.textContent = '';
+    cands.style.display = 'none';
+    return;
+  }
+  var result = convertTicker(val);
+  if (result.converted) {
+    hint.innerHTML = '-> <span style="color:var(--accent);font-weight:700">' + result.ticker + '</span> ' + result.note;
+    // auto-apply button
+    cands.style.display = 'block';
+    cands.innerHTML = '<div onclick="applyTicker('' + result.ticker + '')" style="padding:8px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;">'
+      + '<span style="color:var(--accent);font-weight:700">' + result.ticker + '</span>'
+      + '<span style="color:var(--text2);font-size:11px;">' + result.note + ' - tap to use</span>'
+      + '</div>';
+  } else {
+    hint.textContent = result.note;
+    cands.style.display = 'none';
+  }
+}
+
+function applyTicker(ticker) {
+  document.getElementById('new-ticker').value = ticker;
+  document.getElementById('ticker-hint').textContent = '';
+  document.getElementById('ticker-candidates').style.display = 'none';
+}
+
 window.addEventListener('DOMContentLoaded',restoreGh);
 </script>
 </body>
