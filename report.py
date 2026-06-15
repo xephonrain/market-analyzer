@@ -597,6 +597,10 @@ def generate_html(all_results, pickup_list, chart_html_map=None,
       color:var(--text2);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">
       &#8635;
     </button>
+    <button id="run-btn" onclick="runAnalysis()" style="background:#f0c040;border:none;
+      color:#000;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;">
+      &#9654; Run
+    </button>
   </div>
 </header>
 <main>
@@ -674,6 +678,43 @@ function applyFilter(){{
   var rc=document.getElementById('rc');
   rc.textContent=(_q||_trend!=='all'||_sort==='pickup')?vis.length+' of '+cards.length+' shown':'';
   document.getElementById('no-results').style.display=vis.length===0?'block':'none';
+}}
+
+// Run Analysis from report page
+function runAnalysis(){{
+  var repo  = localStorage.getItem('gh_repo')  || '';
+  var token = localStorage.getItem('gh_token') || '';
+  if(!repo || !token){{
+    var r = prompt('GitHub repo (username/repo-name):');
+    var t = prompt('GitHub Token:');
+    if(!r || !t){{ alert('Repo and Token required'); return; }}
+    localStorage.setItem('gh_repo', r);
+    localStorage.setItem('gh_token', t);
+    repo = r; token = t;
+  }}
+  var btn = document.getElementById('run-btn');
+  btn.textContent = '...'; btn.disabled = true;
+  fetch('https://api.github.com/repos/'+repo+'/actions/workflows/analyze.yml/dispatches',{{
+    method:'POST',
+    headers:{{'Authorization':'Bearer '+token,'Content-Type':'application/json'}},
+    body:JSON.stringify({{ref:'main'}})
+  }}).then(function(r){{
+    if(r.status===204){{
+      btn.textContent='&#9654; Triggered!';
+      btn.style.background='#26a69a';
+      setTimeout(function(){{
+        btn.textContent='&#9654; Run';
+        btn.style.background='#f0c040';
+        btn.disabled=false;
+      }},3000);
+    }} else {{
+      throw new Error('HTTP '+r.status);
+    }}
+  }}).catch(function(e){{
+    alert('Error: '+e.message);
+    btn.textContent='&#9654; Run';
+    btn.disabled=false;
+  }});
 }}
 </script>
 </body>
