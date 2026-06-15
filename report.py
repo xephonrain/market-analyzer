@@ -64,9 +64,9 @@ def _hot_section(hot_list):
 <section class="collapsible-section" id="sec-hot">
   <div class="sec-header" onclick="toggleSec(\'sec-hot\')">
     <span>&#128225; Market Trends <span class="src-badge">Yahoo Finance</span></span>
-    <span class="arrow" id="arr-sec-hot">&#9650;</span>
+    <span class="arrow down" id="arr-sec-hot">&#9650;</span>
   </div>
-  <div class="sec-body" id="body-sec-hot">
+  <div class="sec-body hidden" id="body-sec-hot">
     <div class="hot-tabs">{tabs_head}</div>
     <div>{tabs_body}</div>
   </div>
@@ -130,6 +130,7 @@ def _pickup_modals(pickup_list, symbol_info_map):
             ("Sector",       info.get("sector")),
             ("Industry",     info.get("industry")),
             ("Market Cap",   info.get("market_cap")),
+            ("Float",        info.get("float_shares")),
             ("52W High",     str(info["week52_high"]) if info.get("week52_high") else None),
             ("52W Low",      str(info["week52_low"])  if info.get("week52_low")  else None),
             ("vs 52W High",  f'{info["pct_from_high"]:+.1f}%' if info.get("pct_from_high") is not None else None),
@@ -138,6 +139,23 @@ def _pickup_modals(pickup_list, symbol_info_map):
         ]:
             if val:
                 rows_basic += f'<tr><td class="il">{label}</td><td>{val}</td></tr>'
+
+        # 需給情報
+        rows_supply = ""
+        sr  = info.get("short_ratio")
+        sfp = info.get("short_float_pct")
+        ins = info.get("held_pct_insiders")
+        ist = info.get("held_pct_institutions")
+        ss  = info.get("shares_short")
+        for label, val in [
+            ("Short Ratio",        f'{sr:.1f}days' if sr else None),
+            ("Short % of Float",   f'{sfp*100:.1f}%' if sfp else None),
+            ("Shares Short",       ss),
+            ("Insider Ownership",  f'{ins*100:.1f}%' if ins else None),
+            ("Institution Hold",   f'{ist*100:.1f}%' if ist else None),
+        ]:
+            if val:
+                rows_supply += f'<tr><td class="il">{label}</td><td>{val}</td></tr>'
 
         rows_events = ""
         for label, val in [
@@ -199,6 +217,7 @@ def _pickup_modals(pickup_list, symbol_info_map):
                    f'<div class="modal-body">'
                    f'<div class="modal-trend" style="color:{color}">{arrow} {p["label"]}</div>'
                    f'{"<table class=info-table>" + rows_basic + "</table>" if rows_basic else ""}'
+                   f'{"<div class=modal-sub>Supply &amp; Demand</div><table class=info-table>" + rows_supply + "</table>" if rows_supply else ""}'
                    f'{"<div class=modal-sub>Events</div><table class=info-table>" + rows_events + "</table>" if rows_events else ""}'
                    f'{rec_html}{upg_html}{news_html}'
                    f'{"<div class=modal-no-data>No additional data</div>" if not rows_basic and not rows_events else ""}'
@@ -619,7 +638,9 @@ function switchHotTab(id,btn){{
 function switchTab(sid,tid,btn){{
   document.querySelectorAll('#heads_'+sid+' .tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.querySelectorAll('#chart-card_'+sid+' .tab-pane').forEach(p=>p.classList.remove('active'));
+  var cid2='chart-card_'+sid;
+  var ca=document.getElementById('chart-'+cid2)||document.querySelector('#card_'+sid+' .tab-pane');
+  document.querySelectorAll('#card_'+sid+' .tab-pane').forEach(p=>p.classList.remove('active'));
   document.getElementById(tid).classList.add('active');
 }}
 
