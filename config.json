@@ -10,7 +10,7 @@
       "name": "Silver",
       "ticker": "SI=F",
       "category": "Metals",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "USD/JPY",
@@ -46,7 +46,7 @@
       "name": "Apple",
       "ticker": "AAPL",
       "category": "US Stocks",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "NVIDIA",
@@ -58,13 +58,13 @@
       "name": "Nikkei225",
       "ticker": "^N225",
       "category": "JP Stocks",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Toyota",
       "ticker": "7203.T",
       "category": "JP Stocks",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "Sony",
@@ -76,7 +76,7 @@
       "name": "MUFG",
       "ticker": "8306.T",
       "category": "JP Stocks",
-      "enabled": false
+      "enabled": true
     }
   ],
   "timeframes": [
@@ -124,6 +124,12 @@
   },
   "supertrend_params": {
     "atr_period": 10,
-    "multiplier": 3
+    "multiplier": 3.0
+  },
+  "momentum_params": {
+    "before_bars": 10,
+    "after_bars": 1,
+    "strong_ratio": 2.0,
+    "weak_ratio": 0.8
   }
 }
