@@ -243,8 +243,16 @@ import os
 
 def get_lw_charts_js() -> str:
     """Lightweight Charts のJSを返す（HTMLへの埋め込み用）"""
-    js_path = os.path.join(os.path.dirname(__file__), "lw_charts.js")
-    if os.path.exists(js_path):
-        with open(js_path, encoding="utf-8") as f:
-            return f.read()
+    # __file__ が相対パスの場合も考慮して複数パスを試みる
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "lw_charts.js"),
+        os.path.join(os.path.dirname(__file__), "lw_charts.js"),
+        "lw_charts.js",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lw_charts.js"),
+    ]
+    for js_path in candidates:
+        if os.path.exists(js_path):
+            with open(js_path, encoding="utf-8") as f:
+                return f.read()
+    print(f"  [WARNING] lw_charts.js が見つかりません。試したパス: {candidates}")
     return ""
