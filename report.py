@@ -257,11 +257,17 @@ def _symbol_card(item, chart_html_map):
         elapsed = dow.get("elapsed_str")
         bars    = dow.get("bars_since")
         pending = dow.get("pending", False)
-        if elapsed and bars is not None:
-            pivot = (f'<span class="pivot-tag" style="background:#30363d;color:#8b949e">'
-                     f'Pivot {elapsed}/{bars}b</span>')
+        trend   = dow.get("trend", "range")
+
+        if elapsed and bars is not None and trend in ("uptrend","downtrend"):
+            # トレンド継続時間を色付きで表示
+            t_color = dow_c
+            pivot = (f'<span class="elapsed-tag" style="border-color:{t_color};color:{t_color}">'
+                     f'{elapsed} / {bars}bars</span>')
         elif pending:
-            pivot = '<span class="pivot-tag" style="background:#f0c04022;color:#f0c040">Pending</span>'
+            pdesc = dow.get("pending_desc","")
+            pivot = (f'<span class="elapsed-tag pending" title="{pdesc}">'
+                     f'&#9888; Pending pivot</span>')
         else:
             pivot = ""
 
