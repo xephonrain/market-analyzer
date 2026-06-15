@@ -574,6 +574,10 @@ def generate_html(all_results, pickup_list, chart_html_map=None,
     <div class="hstat">Watch: <span>{total}</span></div>
     <div class="hstat">&#11088; <span>{pickup_count}</span></div>
     <div class="htime">&#128336; {now}</div>
+    <button onclick="location.reload()" style="background:var(--bg3);border:1px solid var(--border);
+      color:var(--text2);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">
+      &#8635;
+    </button>
   </div>
 </header>
 <main>
