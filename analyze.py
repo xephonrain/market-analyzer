@@ -102,18 +102,18 @@ def check_pickup(symbol, mtf_score, tf_results, cond):
     if agree < cond.get("min_tf_agreement", 3):     return None
 
     if cond.get("require_dow_trend", True):
-        daily = next((r for tf, r in tf_results if tf["label"] == "日足"), None)
+        daily = next((r for tf, r in tf_results if tf["label"] in ("Daily", "日足")), None)
         if daily and daily.get("dow", {}).get("trend", "range") not in ("uptrend", "downtrend"):
             return None
 
     if cond.get("require_supertrend_align", True):
-        daily = next((r for tf, r in tf_results if tf["label"] == "日足"), None)
+        daily = next((r for tf, r in tf_results if tf["label"] in ("Daily", "日足")), None)
         if daily:
             st_up = daily.get("st", {}).get("direction", 0) == 1
             if st_up != (direction == "up"):
                 return None
 
-    daily_res   = next((r for tf, r in tf_results if tf["label"] == "日足"), None)
+    daily_res   = next((r for tf, r in tf_results if tf["label"] in ("Daily", "日足")), None)
     elapsed_str = None
     bars_since  = None
     if daily_res and daily_res.get("dow"):
