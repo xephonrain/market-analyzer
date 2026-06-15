@@ -72,5 +72,6 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Update [$(date '+%Y-%m-%d %H:%M JST')]"
+            git pull --rebase origin main
             git push
           fi
