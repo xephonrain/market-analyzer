@@ -164,6 +164,18 @@ def main():
             res = analyze_one(sym["ticker"], tf["interval"], tf["period"],
                               st_params, dow_params)
             df = res.pop("df", None)
+
+            # モメンタム計算
+            if df is not None:
+                try:
+                    from entry_logic import analyze_momentum
+                    cfg_mom = cfg.get("momentum_params", {})
+                    bb = cfg_mom.get("before_bars", 5)
+                    ab = cfg_mom.get("after_bars",  3)
+                    res["momentum"] = analyze_momentum(df, before_bars=bb, after_bars=ab)
+                except Exception as e:
+                    res["momentum"] = None
+
             tf_results.append((tf, res))
 
             st_label  = res["st"]["label"]  if res.get("st")  else "N/A"
@@ -172,18 +184,36 @@ def main():
 
             if df is not None and res.get("st") and res.get("dow"):
                 tid = f"{sid}_{tf['label']}"
-                chart_html_map[tid] = build_chart(
-                    df, sym["name"], tf["label"], res["st"], res["dow"])
+                # エントリーポイントは全TF収集後に計算するため一旦Noneで生成
+                chart_html_map[tid] = (df, sym["name"], tf["label"], res["st"], res["dow"])
             else:
                 print(f"  [WARNING] チャート生成スキップ: df={df is not None} st={res.get('st') is not None} dow={res.get('dow') is not None}")
 
         mtf    = calc_mtf_score(tf_results)
+
+        # エントリーポイント分析
+        from entry_logic import analyze_entry_points
+        entry_points = analyze_entry_points(tf_results)
+        if entry_points:
+            ep_labels = [f"[{e['type']}]{e['stars']}" for e in entry_points]
+            print(f"  Entry: {' '.join(ep_labels)}")
+
+        # チャート生成（エントリーポイントのラインを含める）
+        # Daily TFのエントリーポイントを全チャートに表示
+        for tid, chart_args in list(chart_html_map.items()):
+            if isinstance(chart_args, tuple):
+                df_c, nm, tfl, st_c, dow_c = chart_args
+                chart_html_map[tid] = build_chart(df_c, nm, tfl, st_c, dow_c,
+                                                  entry_points=entry_points)
+
         pickup = check_pickup(sym, mtf, tf_results, cond=pickup_cond)
         if pickup:
+            pickup["entry_points"] = entry_points
             pickup_list.append(pickup)
             print(f"  ★ ピックアップ ({mtf['label']})")
 
-        all_results.append({"symbol": sym, "tf_results": tf_results, "mtf_score": mtf})
+        all_results.append({"symbol": sym, "tf_results": tf_results,
+                             "mtf_score": mtf, "entry_points": entry_points})
 
     # ホット銘柄
     print(f"\n  ホット銘柄取得中...")

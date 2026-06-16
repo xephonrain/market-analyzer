@@ -290,11 +290,20 @@ def _symbol_card(item, chart_html_map):
         else:
             pivot = ""
 
+        # モメンタム表示
+        mom = res.get("momentum") or {}
+        mom_html = ""
+        if mom.get("label"):
+            mc = mom.get("color","#888")
+            mom_html = (f'<span class="mom-tag" style="color:{mc};border-color:{mc}">'
+                        f'{mom["label"]}</span>')
+
         tf_rows += (f'<div class="tf-row">'
                     f'<span class="tf-lbl">{tf["label"]}</span>'
                     f'{_badge(st.get("label","N/A"), st_c)}{sig}'
                     f'{_badge(dow.get("label","N/A"), dow_c)}'
                     f'{pivot}'
+                    f'{mom_html}'
                     f'</div>')
 
     # チャートタブ（展開時のみ）
