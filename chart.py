@@ -19,6 +19,10 @@ def build_chart(df: pd.DataFrame, name: str, tf_label: str,
     if len(df) < 10:
         return "<p style='color:#888;padding:20px'>No chart</p>"
 
+    # データ多すぎる場合は直近500本に制限（ブラウザの負荷軽減）
+    if len(df) > 500:
+        df = df.tail(500).copy()
+
     times = _to_unix(df.index)
 
     # ローソク
@@ -85,10 +89,11 @@ def build_chart(df: pd.DataFrame, name: str, tf_label: str,
                     "lineWidth":1,"lineStyle":1,
                     "title":"[B]Breakdown","axisLabelVisible":True})
 
-    # BUY/SELLシグナル足の高値・安値ライン
+    # BUY/SELLシグナル足の高値・安値ライン（直近3件のみ）
     signal_price_lines = []
     if "st_signal" in df.columns:
-        for idx, row in df[df["st_signal"].notna()].iterrows():
+        sig_df = df[df["st_signal"].notna()].tail(3)  # 直近3件に制限
+        for idx, row in sig_df.iterrows():
             signal_price_lines.append({"price":round(float(row["High"]),6),
                 "color":"rgba(240,192,64,0.5)","lineWidth":1,"lineStyle":2,
                 "title":"Sig H","axisLabelVisible":False})
