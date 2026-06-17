@@ -64,7 +64,7 @@
       "name": "Toyota",
       "ticker": "7203.T",
       "category": "JP Stocks",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "Sony",
@@ -124,12 +124,6 @@
   },
   "supertrend_params": {
     "atr_period": 10,
-    "multiplier": 3.0
-  },
-  "momentum_params": {
-    "before_bars": 10,
-    "after_bars": 1,
-    "strong_ratio": 2.0,
-    "weak_ratio": 0.8
+    "multiplier": 3
   }
 }
