@@ -57,26 +57,46 @@ def _build_prompt(symbol: dict, tf_results: list, mtf: dict,
     if price_info.get("range_position") is not None:
         price_lines.append(f"  レンジ位置: {price_info['range_position']:.0f}%")
 
-    prompt = f"""以下のテクニカル分析データをもとに、トレーダー向けの簡潔な相場コメントを日本語で3〜4文で書いてください。
+    # モメンタム情報
+    mom_lines = []
+    for tf, res in tf_results:
+        mom = res.get("momentum") or {}
+        if mom.get("ratio") is not None:
+            mom_lines.append(
+                f"  {tf['label']}: {mom.get('label','')}"
+                f"（前{mom.get('before_bars',10)}本比）"
+            )
+
+    prompt = f"""あなたはFXと株式のプロトレーダーです。
+以下のテクニカル分析データをもとに、今すぐトレード判断に使える実践的な分析コメントを日本語で書いてください。
 
 銘柄: {symbol['name']} ({symbol['ticker']})
 MTFスコア: {mtf['label']}
 
-【タイムフレーム別分析】
+【マルチタイムフレーム分析】
 {chr(10).join(tf_lines)}
 
 【価格情報】
 {chr(10).join(price_lines) if price_lines else '  データなし'}
 
+【モメンタム（ブレイク強度）】
+{chr(10).join(mom_lines) if mom_lines else '  データなし'}
+
 【エントリーポイント候補】
 {chr(10).join(ep_lines) if ep_lines else '  なし'}
 
+以下の構成で出力してください（各項目1〜2文、合計150字以内）:
+
+📌 状況: 現在のトレンド状況を一言で
+🎯 根拠: エントリー根拠（どのTFが揃っているか、モメンタムはどうか）
+⚠️ 注意: リスク・注意すべき点（逆行シグナル・高値圏・安値圏など）
+📈 シナリオ: 上昇継続 or 下降継続した場合の次の目標と、崩れた場合の撤退ライン
+
 条件:
-- 3〜4文で簡潔に
-- トレンドの状況と注目ポイントを述べる
-- エントリー候補がある場合は言及する
-- 断定的にならず「〜に注目」「〜を確認したい」等の表現を使う
-- 余計な前置きは不要（「はい」「承知しました」等は不要）
+- 前置き不要（「はい」「承知」等は書かない）
+- 数値は具体的に（価格情報があれば必ず使う）
+- 断定ではなく「〜が有効」「〜に注意」等の表現
+- 絵文字はそのまま使う
 """
     return prompt
 
@@ -97,7 +117,7 @@ def generate_ai_comment(symbol: dict, tf_results: list, mtf: dict,
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
-            "maxOutputTokens": 300,
+            "maxOutputTokens": 500,
             "temperature": 0.7,
         }
     }
