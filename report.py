@@ -246,6 +246,14 @@ def _tf_cell(tf, res):
     dow = res.get("dow") or {}
     mom = res.get("momentum") or {}
 
+    # データ取得失敗の場合
+    if not st or st.get("label") == "N/A" or not dow or dow.get("label") == "データ不足":
+        return (f'<div class="tf-cell na-cell">'
+                f'<div class="tf-name">{tf["label"]}</div>'
+                f'<div class="tf-icon" style="color:var(--dim)">—</div>'
+                f'<div class="tf-sub" style="color:var(--dim)">No data</div>'
+                f'</div>')
+
     direction = _tf_direction(st, dow)
     elapsed   = dow.get("elapsed_str")
     bars      = dow.get("bars_since")
