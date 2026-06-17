@@ -114,7 +114,7 @@ def analyze_trend_follow(tf_results: list) -> dict | None:
 
     return {
         "type":        "A",
-        "type_label":  "Trend Follow",
+        "type_label":  "TF",
         "direction":   direction,
         "signal":      entry_signal or ("BUY" if direction == "uptrend" else "SELL"),
         "strength":    strength,
@@ -206,7 +206,7 @@ def analyze_range_break(tf_results: list) -> dict | None:
 
     return {
         "type":           "B",
-        "type_label":     "Range Breakout",
+        "type_label":     "RB",
         "direction":      "range",
         "signal":         "WATCH",
         "strength":       strength,
@@ -298,7 +298,7 @@ def analyze_reversal_fresh(tf_results: list) -> dict | None:
 
     return {
         "type":        "C",
-        "type_label":  "Fresh Reversal",
+        "type_label":  "TR",
         "direction":   direction,
         "signal":      "BUY" if direction == "uptrend" else "SELL",
         "strength":    best["strength"],
