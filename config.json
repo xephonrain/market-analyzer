@@ -10,7 +10,7 @@
       "name": "Silver",
       "ticker": "SI=F",
       "category": "Metals",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "USD/JPY",
