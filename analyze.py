@@ -216,6 +216,7 @@ def main():
         if gemini_key and mtf.get("score", 0) >= 50:
             try:
                 from ai_analysis import generate_ai_comment
+                import time; time.sleep(3)
                 print(f"  AI分析中...", end="", flush=True)
                 ai_comment = generate_ai_comment(
                     sym, tf_results, mtf, entry_points, price_info, gemini_key)
