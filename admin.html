@@ -241,10 +241,10 @@ function onTickerInput(val) {
     hint.innerHTML = '-> <span style="color:var(--accent);font-weight:700">' + result.ticker + '</span> ' + result.note;
     // auto-apply button
     cands.style.display = 'block';
-    cands.innerHTML = '<div onclick="applyTicker('' + result.ticker + '')" style="padding:8px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;">'
-      + '<span style="color:var(--accent);font-weight:700">' + result.ticker + '</span>'
-      + '<span style="color:var(--text2);font-size:11px;">' + result.note + ' - tap to use</span>'
-      + '</div>';
+    var tk=result.ticker.replace(/"/g,'');
+    cands.innerHTML = '<div onclick="applyTicker(&quot;'+tk+'&quot;)" style="padding:8px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;">'
+      + '<span style="color:var(--accent);font-weight:700">'+result.ticker+'</span>'
+      + '<span style="color:var(--text2);font-size:11px;">'+result.note+' - tap to use</span>'
   } else {
     hint.textContent = result.note;
     cands.style.display = 'none';
