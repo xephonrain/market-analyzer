@@ -61,6 +61,7 @@ def analyze_one(ticker, interval, period, st_params, dow_params):
 
 def calc_mtf_score(tf_results):
     up_score = down_score = total_weight = 0
+    valid_count = 0
     agreements = []
     for tf, res in tf_results:
         weight  = tf.get("weight", 1)
@@ -68,6 +69,11 @@ def calc_mtf_score(tf_results):
         dow = res.get("dow") or {}
         st_dir  = st.get("direction", 0)
         dow_dir = dow.get("trend", "range")
+        st_lbl  = st.get("label", "")
+        # N/A（データ取得失敗）のTFはスコア計算から除外
+        if not st_lbl or st_lbl == "N/A":
+            continue
+        valid_count += 1
         if st_dir == 1 and dow_dir == "uptrend":
             up_score   += weight
             agreements.append(("up", tf["label"]))
@@ -80,18 +86,26 @@ def calc_mtf_score(tf_results):
         return {"score": 0, "direction": "unknown", "label": "判定不能",
                 "color": "#888", "agree_count": 0, "agreements": []}
 
-    if up_score >= down_score:
-        raw, direction = up_score / total_weight * 100, "up"
-        label, color   = f"↑ 上昇優勢 ({raw:.0f}pt)", "#26a69a"
-        agree_count    = sum(1 for d, _ in agreements if d == "up")
-    else:
-        raw, direction = down_score / total_weight * 100, "down"
-        label, color   = f"↓ 下降優勢 ({raw:.0f}pt)", "#ef5350"
-        agree_count    = sum(1 for d, _ in agreements if d == "down")
+    best_score = max(up_score, down_score)
+    direction  = "up" if up_score >= down_score else "down"
+    score_pct  = round(best_score / total_weight * 100)
+    color      = "#00d4aa" if direction == "up" else "#ff4e6a"
+    arrow      = "↑" if direction == "up" else "↓"
+    label      = f"{arrow} {'上昇' if direction=='up' else '下降'}優勢 ({score_pct}pt)"
 
-    return {"score": round(raw, 1), "direction": direction, "label": label,
-            "color": color, "agree_count": agree_count, "agreements": agreements}
+    # 有効TFが少ない場合は注記
+    valid_ratio = valid_count / len(tf_results) if tf_results else 0
+    if valid_ratio < 0.6:
+        label += f" ※{valid_count}TF"
 
+    return {
+        "score":       score_pct,
+        "direction":   direction,
+        "label":       label,
+        "color":       color,
+        "agree_count": len(agreements),
+        "agreements":  agreements,
+    }
 
 def check_pickup(symbol, mtf_score, tf_results, cond):
     score     = mtf_score.get("score", 0)
@@ -216,7 +230,7 @@ def main():
         if gemini_key and mtf.get("score", 0) >= 50:
             try:
                 from ai_analysis import generate_ai_comment
-                import time; time.sleep(3)
+                import time; time.sleep(8)
                 print(f"  AI分析中...", end="", flush=True)
                 ai_comment = generate_ai_comment(
                     sym, tf_results, mtf, entry_points, price_info, gemini_key)
