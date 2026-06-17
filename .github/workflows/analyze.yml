@@ -57,10 +57,13 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # 最新のリモートを取得してreport.htmlだけ上書き
+          # 生成したHTMLを一時保存
+          cp output/report.html /tmp/report_new.html
+          # リモートの最新に合わせる
           git fetch origin main
           git reset --hard origin/main
-          cp /home/runner/work/market-analyzer/market-analyzer/output/report.html output/report.html || true
+          # 生成したHTMLを配置
+          cp /tmp/report_new.html output/report.html
           git add output/report.html
           if git diff --staged --quiet; then
             echo "No changes to commit"
