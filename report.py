@@ -347,10 +347,17 @@ def _symbol_card(item):
                     f' · SL {_fmt_price(ep.get("sl_price"))} · TP {_fmt_price(ep.get("tp_price"))}{rr}</span>'
                     f'</div>')
 
-    # AI
+    # AI（タップで全文展開）
     ai_html = ""
     if ai_comment:
-        ai_html = f'<div class="ai-row"><span class="ai-icon">🤖</span><span>{ai_comment}</span></div>'
+        ai_id = f"ai_{sid}"
+        # 改行を<br>に変換
+        ai_body = ai_comment.replace('\n', '<br>')
+        ai_html = (f'<div class="ai-row" id="{ai_id}" onclick="toggleAI(&quot;{ai_id}&quot;)">'
+                   f'<span class="ai-icon">🤖</span>'
+                   f'<span class="ai-text collapsed">{ai_body}</span>'
+                   f'<span class="ai-more">▼</span>'
+                   f'</div>')
 
     # Now表示（pos_htmlがない場合の現在値）
     card_cls = "sym-card pickup-card" if is_pickup else "sym-card"
@@ -564,8 +571,14 @@ main{{padding:6px 12px calc(40px + env(safe-area-inset-bottom,0px));max-width:90
 .ep-rr{{font-size:11px;font-weight:700;color:var(--blue);margin-left:auto;}}
 
 /* AI */
-.ai-row{{padding:8px 14px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);line-height:1.6;display:flex;gap:6px;align-items:flex-start;background:rgba(74,158,255,.04);}}
+.ai-row{{padding:8px 14px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);line-height:1.6;display:flex;gap:6px;align-items:flex-start;background:rgba(74,158,255,.04);cursor:pointer;user-select:none;}}
+.ai-row:hover{{background:rgba(74,158,255,.08);}}
 .ai-icon{{flex-shrink:0;}}
+.ai-text{{flex:1;}}
+.ai-text.collapsed{{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}}
+.ai-text.expanded{{display:block;}}
+.ai-more{{flex-shrink:0;font-size:10px;color:var(--blue);align-self:flex-end;transition:transform .2s;}}
+.ai-more.open{{transform:rotate(180deg);}}
 
 /* Modal */
 .modal-ov{{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:flex-end;justify-content:center;}}
@@ -723,6 +736,22 @@ function runAnalysis(){{
     alert('Error: '+e.message);
     btn.textContent='▶ Run';btn.disabled=false;
   }});
+}}
+
+// Toggle AI comment
+function toggleAI(id){{
+  var row  = document.getElementById(id);
+  var text = row.querySelector('.ai-text');
+  var more = row.querySelector('.ai-more');
+  if(text.classList.contains('collapsed')){{
+    text.classList.remove('collapsed');
+    text.classList.add('expanded');
+    more.classList.add('open');
+  }}else{{
+    text.classList.remove('expanded');
+    text.classList.add('collapsed');
+    more.classList.remove('open');
+  }}
 }}
 
 // Init
