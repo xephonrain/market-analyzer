@@ -175,8 +175,11 @@ def build_price_info(tf_results: list) -> dict:
     if not daily:
         return info
 
-    st  = daily.get("st", {})
-    dow = daily.get("dow", {})
+    st  = daily.get("st") or {}
+    dow = daily.get("dow") or {}
+
+    if not st or not dow:
+        return info
 
     # 現在値
     current = st.get("close")
