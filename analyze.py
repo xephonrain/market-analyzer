@@ -206,14 +206,34 @@ def main():
                 chart_html_map[tid] = build_chart(df_c, nm, tfl, st_c, dow_c,
                                                   entry_points=entry_points)
 
+        # 価格情報の構築
+        from ai_analysis import build_price_info
+        price_info = build_price_info(tf_results)
+
+        # AI分析コメント生成
+        ai_comment = ""
+        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        if gemini_key and (entry_points or mtf.get("score", 0) >= 50):
+            try:
+                from ai_analysis import generate_ai_comment
+                print(f"  AI分析中...", end="", flush=True)
+                ai_comment = generate_ai_comment(
+                    sym, tf_results, mtf, entry_points, price_info, gemini_key)
+                print(f" 完了" if ai_comment else " スキップ")
+            except Exception as e:
+                print(f" エラー: {e}")
+
         pickup = check_pickup(sym, mtf, tf_results, cond=pickup_cond)
         if pickup:
             pickup["entry_points"] = entry_points
+            pickup["price_info"]   = price_info
+            pickup["ai_comment"]   = ai_comment
             pickup_list.append(pickup)
             print(f"  ★ ピックアップ ({mtf['label']})")
 
         all_results.append({"symbol": sym, "tf_results": tf_results,
-                             "mtf_score": mtf, "entry_points": entry_points})
+                             "mtf_score": mtf, "entry_points": entry_points,
+                             "price_info": price_info, "ai_comment": ai_comment})
 
     # ホット銘柄
     print(f"\n  ホット銘柄取得中...")

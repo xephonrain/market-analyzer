@@ -326,6 +326,46 @@ def _symbol_card(item, chart_html_map):
 
     is_pickup = str(item.get("is_pickup", False)).lower()
 
+    # 価格情報セクション
+    price_info = item.get("price_info", {})
+    ai_comment = item.get("ai_comment", "")
+    price_html = ""
+    if price_info.get("current"):
+        cur = price_info["current"]
+        sh  = price_info.get("swing_high")
+        sl  = price_info.get("swing_low")
+        pos = price_info.get("range_position")
+        pfh = price_info.get("pct_from_high")
+        pfl = price_info.get("pct_from_low")
+        
+        price_html = '<div class="price-info">'
+        price_html += f'<span class="price-cur">Now: {cur:.4g}</span>'
+        if sh:
+            c = "#ef5350" if pfh and pfh < -5 else "#8b949e"
+            price_html += f'<span class="price-item" style="color:{c}">High: {sh:.4g}'
+            if pfh is not None: price_html += f' ({pfh:+.1f}%)'
+            price_html += '</span>'
+        if sl:
+            c = "#26a69a" if pfl and pfl > 5 else "#8b949e"
+            price_html += f'<span class="price-item" style="color:{c}">Low: {sl:.4g}'
+            if pfl is not None: price_html += f' ({pfl:+.1f}%)'
+            price_html += '</span>'
+        if pos is not None:
+            # レンジ位置バー
+            bar_color = "#26a69a" if pos > 60 else "#ef5350" if pos < 40 else "#ffa726"
+            price_html += (f'<div class="range-bar-wrap">'
+                           f'<div class="range-bar-bg">'
+                           f'<div class="range-bar-pos" style="left:{pos:.0f}%;background:{bar_color}"></div>'
+                           f'</div>'
+                           f'<span class="range-pct">{pos:.0f}%</span>'
+                           f'</div>')
+        price_html += '</div>'
+
+    # AIコメント
+    ai_html = ""
+    if ai_comment:
+        ai_html = f'<div class="ai-comment">&#129302; {ai_comment}</div>'
+
     return (f'<div class="symbol-card" id="{cid}" '
             f'data-name="{sym["name"]}" data-ticker="{sym["ticker"]}" '
             f'data-cat="{sym["category"]}" data-score="{mtf["score"]}" '
@@ -351,6 +391,8 @@ def _symbol_card(item, chart_html_map):
             f'</div>'
 
             # チャートエリア（展開時のみ表示）
+            f'{price_html}'
+            f'{ai_html}'
             f'<div class="chart-area hidden" id="chart-{cid}">'
             f'<div class="tab-heads" id="heads_{sid}">{tab_heads}</div>'
             f'<div class="tab-content">{tab_bodies}</div>'
