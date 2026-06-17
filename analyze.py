@@ -213,7 +213,7 @@ def main():
         # AI分析コメント生成
         ai_comment = ""
         gemini_key = os.environ.get("GEMINI_API_KEY", "")
-        if gemini_key and (entry_points or mtf.get("score", 0) >= 50):
+        if gemini_key and mtf.get("score", 0) >= 50:
             try:
                 from ai_analysis import generate_ai_comment
                 print(f"  AI分析中...", end="", flush=True)
