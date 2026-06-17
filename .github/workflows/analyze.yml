@@ -57,13 +57,14 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # 最新のリモートを取得してreport.htmlだけ上書き
+          git fetch origin main
+          git reset --hard origin/main
+          cp /home/runner/work/market-analyzer/market-analyzer/output/report.html output/report.html || true
           git add output/report.html
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Update report [$(date '+%Y-%m-%d %H:%M JST')]"
-            git stash
-            git pull --rebase origin main
-            git stash pop || true
-            git push
+            git push origin main
           fi
