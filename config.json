@@ -77,6 +77,12 @@
       "ticker": "8306.T",
       "category": "JP Stocks",
       "enabled": true
+    },
+    {
+      "name": "オリエンタルランド",
+      "ticker": "4661",
+      "category": "JP Stocks",
+      "enabled": true
     }
   ],
   "timeframes": [
