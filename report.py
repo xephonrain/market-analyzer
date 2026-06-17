@@ -18,6 +18,9 @@ CATEGORY_ICONS = {
 def _cat_icon(cat):
     return CATEGORY_ICONS.get(cat, "📊")
 
+def _ep_type_label(t):
+    return {"A":"TF","B":"RB","C":"TR"}.get(t, t)
+
 def _score_color(direction):
     return {"up":"var(--up)","down":"var(--down)"}.get(direction,"var(--rng)")
 
@@ -186,7 +189,7 @@ def _pickup_modals(pickup_list, symbol_info_map):
             cls = "buy" if sig=="BUY" else "sell" if sig=="SELL" else "watch"
             rr  = f' · RR {ep["rr"]}' if ep.get("rr") else ""
             ep_html += (f'<div class="ep-row">'
-                        f'<span class="ep-badge {cls}">[{ep["type"]}]{ep["stars"]} {sig}</span>'
+                        f'<span class="ep-badge {cls}">[{_ep_type_label(ep["type"])}]{ep["stars"]} {sig}</span>'
                         f'<span class="ep-price">Entry {_fmt_price(ep.get("entry_price") or ep.get("breakout_price"))}'
                         f' · SL {_fmt_price(ep.get("sl_price"))} · TP {_fmt_price(ep.get("tp_price"))}{rr}</span>'
                         f'</div>')
@@ -263,19 +266,29 @@ def _tf_cell(tf, res):
     elif pending:
         pivot = '<div class="tf-pivot" style="color:var(--gold)">⚠Pend</div>'
 
-    # モメンタム
+    # モメンタム（pivotがある場合は省略してスコアのみ）
     mom_html = ""
     if mom.get("ratio") is not None:
         ratio = mom["ratio"]
         mc    = mom.get("color","#888")
         stars = "●●●" if ratio>=2.5 else "●●" if ratio>=2.0 else "●" if ratio>=1.2 else "○"
-        mom_html = f'<div class="tf-pivot" style="color:{mc}">{stars}({ratio:.1f}x)</div>'
+        mom_html = f'<div class="tf-pivot" style="color:{mc}">{stars}{ratio:.1f}x</div>'
+
+    # pivotとmomを1行にまとめる
+    sub2 = ""
+    if pivot and mom_html:
+        # pivotとmomが両方ある場合はpivotのみ（スペース節約）
+        sub2 = pivot
+    elif pivot:
+        sub2 = pivot
+    elif mom_html:
+        sub2 = mom_html
 
     return (f'<div class="{cell_cls}">'
             f'<div class="tf-name">{tf["label"]}</div>'
             f'<div class="tf-icon" style="color:{icon_col}">{icon}</div>'
             f'<div class="tf-sub">{sub}</div>'
-            f'{pivot}{mom_html}'
+            f'{sub2}'
             f'</div>')
 
 
@@ -329,7 +342,7 @@ def _symbol_card(item):
         rr  = f' · RR {ep["rr"]}' if ep.get("rr") else ""
         ep_v = ep.get("entry_price") or ep.get("breakout_price")
         ep_html += (f'<div class="entry-row">'
-                    f'<span class="ep-badge {cls}">[{ep["type"]}]{ep["stars"]} {sig}</span>'
+                    f'<span class="ep-badge {cls}">[{_ep_type_label(ep["type"])}]{ep["stars"]} {sig}</span>'
                     f'<span class="ep-price">Entry {_fmt_price(ep_v)}'
                     f' · SL {_fmt_price(ep.get("sl_price"))} · TP {_fmt_price(ep.get("tp_price"))}{rr}</span>'
                     f'</div>')
@@ -531,15 +544,15 @@ main{{padding:6px 12px calc(40px + env(safe-area-inset-bottom,0px));max-width:90
 
 /* TF grid */
 .tf-grid{{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);}}
-.tf-cell{{padding:8px 4px 22px;text-align:center;border-right:1px solid var(--line);position:relative;}}
+.tf-cell{{padding:7px 3px 7px;text-align:center;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;align-items:center;}}
 .tf-cell:last-child{{border-right:none;}}
-.tf-name{{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}}
-.tf-icon{{font-size:20px;line-height:1;margin-bottom:2px;}}
-.tf-sub{{font-size:8px;color:var(--dim);line-height:1.3;}}
+.tf-name{{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.03em;}}
+.tf-icon{{font-size:18px;line-height:1;}}
+.tf-sub{{font-size:8px;color:var(--dim);line-height:1.2;max-width:100%;overflow:hidden;}}
 .up-cell{{background:rgba(0,212,170,.04);}}
 .dn-cell{{background:rgba(255,78,106,.04);}}
 .rng-cell{{background:rgba(245,166,35,.03);}}
-.tf-pivot{{position:absolute;bottom:3px;left:0;right:0;font-size:8px;color:var(--dim);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;}}
+.tf-pivot{{font-size:8px;color:var(--dim);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding:0 1px;}}
 
 /* Entry */
 .entry-row{{padding:7px 14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}}
