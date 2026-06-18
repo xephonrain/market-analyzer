@@ -441,17 +441,15 @@ def _symbol_card(item):
                     f' · SL {_fmt_price(ep.get("sl_price"))} · TP {_fmt_price(ep.get("tp_price"))}{rr}</span>'
                     f'</div>')
 
-    # AI（タップで全文展開）
-    ai_html = ""
-    if ai_comment:
-        ai_id = f"ai_{sid}"
-        # 改行を<br>に変換
-        ai_body = ai_comment.replace('\n', '<br>')
-        ai_html = (f'<div class="ai-row" id="{ai_id}" onclick="toggleAI(&quot;{ai_id}&quot;)">'
-                   f'<span class="ai-icon">🤖</span>'
-                   f'<span class="ai-text collapsed">{ai_body}</span>'
-                   f'<span class="ai-more">▼</span>'
-                   f'</div>')
+    # AI（ボタンタップで取得・展開）
+    ai_id   = f"ai_{sid}"
+    ai_html = (f'<div class="ai-row" id="{ai_id}">'
+               f'<span class="ai-icon">🤖</span>'
+               f'<span class="ai-text collapsed" id="ai-text-{sid}"></span>'
+               f'<button class="ai-btn" id="ai-btn-{sid}" '
+               f'onclick="fetchAI(&quot;{sid}&quot;,&quot;{sym["name"]}&quot;,&quot;{sym["ticker"]}&quot;)">'
+               f'AI分析</button>'
+               f'</div>')
 
     # Now表示（pos_htmlがない場合の現在値）
     has_ai = bool(ai_comment)
@@ -843,22 +841,90 @@ function runAnalysis(){{
   }});
 }}
 
-// Toggle AI comment
-function toggleAI(id){{
-  var row  = document.getElementById(id);
-  if(!row) return;
-  var text = row.querySelector('.ai-text');
-  var more = row.querySelector('.ai-more');
-  if(!text) return;
+// Toggle AI text on click
+function toggleAIText(sid){{
+  var text = document.getElementById('ai-text-'+sid);
+  if(!text||!text.textContent) return;
   if(text.classList.contains('collapsed')){{
     text.classList.remove('collapsed');
     text.classList.add('expanded');
-    if(more) more.textContent='▲';
   }}else{{
     text.classList.remove('expanded');
     text.classList.add('collapsed');
-    if(more) more.textContent='▼';
   }}
+}}
+
+// Fetch AI analysis from Gemini
+function fetchAI(sid, name, ticker){{
+  var key = localStorage.getItem('gemini_key')||'';
+  if(!key){{
+    key = prompt('Gemini API Key を入力してください（localStorage に保存されます）:');
+    if(!key) return;
+    localStorage.setItem('gemini_key', key);
+  }}
+  var btn  = document.getElementById('ai-btn-'+sid);
+  var text = document.getElementById('ai-text-'+sid);
+  if(!btn||!text) return;
+  btn.textContent='取得中...';
+  btn.disabled=true;
+
+  // カードのデータからプロンプトを構築
+  var card = document.getElementById('card_'+sid);
+  var score = card?.dataset.score||'';
+  var trend = card?.dataset.trend||'';
+  var tfs = [];
+  card?.querySelectorAll('.tf-cell').forEach(function(c){{
+    var name2 = c.querySelector('.tf-name')?.textContent||'';
+    var icon  = c.querySelector('.tf-icon')?.textContent||'';
+    var sub   = c.querySelector('.tf-sub')?.textContent||'';
+    var pivot = c.querySelector('.tf-pivot')?.textContent||'';
+    tfs.push(name2+':'+icon+' '+sub+(pivot?' ('+pivot+')':''));
+  }});
+  var epTexts = [];
+  card?.querySelectorAll('.ep-badge,.ep-price').forEach(function(el){{
+    epTexts.push(el.textContent.trim());
+  }});
+  var posText = card?.querySelector('.pos-pct')?.textContent||'';
+
+  var prompt = "あなたはFX・株式のプロトレーダーです。以下のテクニカル分析データをもとに今すぐ使えるトレード判断コメントを日本語で書いてください。\n\n"+
+    "銘柄: "+name+" ("+ticker+")\n"+
+    "MTFスコア: "+score+"pt "+trend+"\n"+
+    "\nタイムフレーム:\n"+tfs.join("\n")+"\n"+
+    "\n価格レンジ位置: "+posText+"\n"+
+    "\nエントリー候補: "+epTexts.join(" / ")+"\n"+
+    "\n以下の形式で出力（各1〜2文）:\n"+
+    "📌 状況: 現在のトレンド状況\n"+
+    "🎯 根拠: エントリー根拠（TF一致・モメンタム等）\n"+
+    "⚠️ 注意: リスク・注意点\n"+
+    "📈 シナリオ: 目標値と撤退ライン\n\n"+
+    "前置き不要。数値は具体的に。";
+
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+key, {{
+    method:'POST',
+    headers:{{'Content-Type':'application/json'}},
+    body: JSON.stringify({{
+      contents:[{{parts:[{{text:prompt}}]}}],
+      generationConfig:{{maxOutputTokens:800,temperature:0.7}}
+    }})
+  }}).then(function(r){{
+    if(r.status===429)throw new Error('429: レート制限。少し待ってから再試行してください');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.json();
+  }}).then(function(d){{
+    var t=(d.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
+    if(!t)throw new Error('レスポンスが空です');
+    text.innerHTML=t.replace(/\n/g,'<br>');
+    text.classList.remove('collapsed');
+    text.classList.add('expanded');
+    text.onclick=function(){{toggleAIText(sid);}};
+    btn.classList.add('done');
+  }}).catch(function(e){{
+    text.textContent='エラー: '+e.message;
+    text.classList.remove('collapsed');
+    text.classList.add('expanded');
+    btn.textContent='AI分析';
+    btn.disabled=false;
+  }});
 }}
 
 // ── 監視追加 ──
