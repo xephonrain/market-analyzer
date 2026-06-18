@@ -85,7 +85,7 @@ MTFスコア: {mtf['label']}
 【エントリーポイント候補】
 {chr(10).join(ep_lines) if ep_lines else '  なし'}
 
-以下の構成で出力してください（各項目1〜2文、合計150字以内）:
+以下の構成で出力してください（各項目1〜2文、各項目1〜2文）:
 
 📌 状況: 現在のトレンド状況を一言で
 🎯 根拠: エントリー根拠（どのTFが揃っているか、モメンタムはどうか）
@@ -117,7 +117,7 @@ def generate_ai_comment(symbol: dict, tf_results: list, mtf: dict,
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
-            "maxOutputTokens": 500,
+            "maxOutputTokens": 800,
             "temperature": 0.7,
         }
     }
