@@ -368,7 +368,13 @@ def _symbol_card(item):
                    f'</div>')
 
     # Now表示（pos_htmlがない場合の現在値）
-    card_cls = "sym-card pickup-card" if is_pickup else "sym-card"
+    has_ai = bool(ai_comment)
+    if is_pickup:
+        card_cls = "sym-card pickup-card"
+    elif has_ai:
+        card_cls = "sym-card ai-card"
+    else:
+        card_cls = "sym-card"
 
     return (f'<div class="{card_cls}" id="card_{sid}" '
             f'data-name="{sym["name"]}" data-ticker="{sym["ticker"]}" '
@@ -537,6 +543,8 @@ main{{padding:6px 12px calc(40px + env(safe-area-inset-bottom,0px));max-width:90
 .sym-card{{background:var(--ink2);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;transition:border-color .15s;}}
 .sym-card:hover{{border-color:var(--blue);}}
 .sym-card.pickup-card{{border-color:var(--gold);}}
+    .sym-card.ai-card{{border-color:rgba(74,158,255,.5);}}
+    .sym-card.ai-card .card-top{{border-left:3px solid var(--blue);}}
 
 .card-top{{padding:12px 14px 8px;display:flex;align-items:center;gap:10px;}}
 .sym-icon{{width:36px;height:36px;border-radius:10px;background:var(--ink3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}}
@@ -582,9 +590,9 @@ main{{padding:6px 12px calc(40px + env(safe-area-inset-bottom,0px));max-width:90
 .ai-row{{padding:8px 14px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--dim);line-height:1.6;display:flex;gap:6px;align-items:flex-start;background:rgba(74,158,255,.04);cursor:pointer;user-select:none;}}
 .ai-row:hover{{background:rgba(74,158,255,.08);}}
 .ai-icon{{flex-shrink:0;}}
-.ai-text{{flex:1;}}
-.ai-text.collapsed{{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}}
-.ai-text.expanded{{display:block;}}
+.ai-text{{flex:1;overflow:hidden;transition:max-height .3s ease;}}
+.ai-text.collapsed{{max-height:3.2em;}}
+.ai-text.expanded{{max-height:600px;}}
 .ai-more{{flex-shrink:0;font-size:10px;color:var(--blue);align-self:flex-end;transition:transform .2s;}}
 .ai-more.open{{transform:rotate(180deg);}}
 
@@ -749,16 +757,18 @@ function runAnalysis(){{
 // Toggle AI comment
 function toggleAI(id){{
   var row  = document.getElementById(id);
+  if(!row) return;
   var text = row.querySelector('.ai-text');
   var more = row.querySelector('.ai-more');
+  if(!text) return;
   if(text.classList.contains('collapsed')){{
     text.classList.remove('collapsed');
     text.classList.add('expanded');
-    more.classList.add('open');
+    if(more) more.textContent='▲';
   }}else{{
     text.classList.remove('expanded');
     text.classList.add('collapsed');
-    more.classList.remove('open');
+    if(more) more.textContent='▼';
   }}
 }}
 
