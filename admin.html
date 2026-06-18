@@ -1,4 +1,46 @@
-<!DOCTYPE html>
+<!DOC
+<div id="tab-scan" class="tab-pane" style="display:none">
+  <div class="sec-head">スキャン設定</div>
+  <div class="setting-row">
+    <label>スキャン有効</label>
+    <input type="checkbox" id="sc-enabled" onchange="updateScan()">
+  </div>
+  <div class="sec-head" style="margin-top:10px">日本株</div>
+  <div class="setting-row">
+    <label>最大株価（円）</label>
+    <div class="num-ctrl">
+      <button onclick="adjScan('jp_max_price',-100)">−</button>
+      <input id="sc-jp-price" type="number" min="100" max="10000" step="100" onchange="updateScan()">
+      <button onclick="adjScan('jp_max_price',100)">＋</button>
+    </div>
+  </div>
+  <div class="sec-head" style="margin-top:10px">US株</div>
+  <div class="setting-row">
+    <label>最大株価（ドル）</label>
+    <div class="num-ctrl">
+      <button onclick="adjScan('us_max_price',-5)">−</button>
+      <input id="sc-us-price" type="number" min="1" max="500" step="5" onchange="updateScan()">
+      <button onclick="adjScan('us_max_price',5)">＋</button>
+    </div>
+  </div>
+  <div class="sec-head" style="margin-top:10px">転換判定</div>
+  <div class="setting-row">
+    <label>1H転換後の最大本数</label>
+    <div class="num-ctrl">
+      <button onclick="adjScan('max_1h_bars',-5)">−</button>
+      <input id="sc-bars" type="number" min="5" max="100" step="5" onchange="updateScan()">
+      <button onclick="adjScan('max_1h_bars',5)">＋</button>
+    </div>
+  </div>
+  <div class="setting-row">
+    <label>表示件数上限</label>
+    <div class="num-ctrl">
+      <button onclick="adjScan('max_results',-5)">−</button>
+      <input id="sc-results" type="number" min="5" max="50" step="5" onchange="updateScan()">
+      <button onclick="adjScan('max_results',5)">＋</button>
+    </div>
+  </div>
+</div>TYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -98,6 +140,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <button class="tbtn active" onclick="switchTab('symbols',this)">Symbols</button>
   <button class="tbtn" onclick="switchTab('pickup',this)">Pickup</button>
   <button class="tbtn" onclick="switchTab('tf',this)">Timeframe</button>
+  <button class="tbtn" onclick="switchTab('scan',this)">Scan</button>
   <button class="tbtn" onclick="switchTab('st',this)">ST Params</button>
 </div>
 <main>
@@ -179,7 +222,7 @@ function restoreGh(){var r=localStorage.getItem('gh_repo')||'',t=localStorage.ge
 async function loadFromGitHub(){var r=getRepo(),t=getToken();if(!r||!t)return;setStatus('Loading...');try{var res=await fetch('https://api.github.com/repos/'+r+'/contents/config.json',{headers:{'Authorization':'Bearer '+t}});if(res.status===404){setStatus('config.json not found');renderAll(defaultConfig());enableButtons();return;}if(!res.ok)throw new Error('HTTP '+res.status);var data=await res.json();var b64=data.content.replace(/\n/g,'');var bin=atob(b64);var bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);var json=JSON.parse(new TextDecoder('utf-8').decode(bytes));renderAll(json);enableButtons();setStatus('Loaded \u2713');toast('Config loaded','ok');}catch(e){setStatus('Error: '+e.message);toast('Load failed: '+e.message,'err');}}
 async function saveToGitHub(){var r=getRepo(),t=getToken();if(!r||!t){toast('Enter repo and token','err');return;}var btn=document.getElementById('btn-save');btn.textContent='...';btn.disabled=true;try{var sha=null;var head=await fetch('https://api.github.com/repos/'+r+'/contents/config.json',{headers:{'Authorization':'Bearer '+t}});if(head.ok)sha=(await head.json()).sha;var json=buildConfig();var body={message:'Update config.json via admin UI',content:btoa(unescape(encodeURIComponent(JSON.stringify(json,null,2))))};if(sha)body.sha=sha;var res=await fetch('https://api.github.com/repos/'+r+'/contents/config.json',{method:'PUT',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!res.ok)throw new Error('HTTP '+res.status);dirty=false;btn.textContent='Save';setStatus('Saved \u2713 '+new Date().toLocaleTimeString());toast('Saved to GitHub \u2713','ok');}catch(e){btn.textContent='Save';btn.disabled=false;toast('Save failed: '+e.message,'err');}}
 async function triggerAction(){var r=getRepo(),t=getToken();if(!r||!t){toast('Enter repo and token','err');return;}var btn=document.getElementById('btn-run');btn.textContent='...';btn.disabled=true;try{var res=await fetch('https://api.github.com/repos/'+r+'/actions/workflows/analyze.yml/dispatches',{method:'POST',headers:{'Authorization':'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({ref:'main'})});if(res.status===204){toast('Actions triggered \u2713','ok');setStatus('Analysis running...');}else{throw new Error('HTTP '+res.status);}}catch(e){toast('Trigger failed: '+e.message,'err');}finally{btn.textContent='\u25BA Run';btn.disabled=false;}}
-function renderAll(json){cfg=JSON.parse(JSON.stringify(json));renderSymbols(cfg.symbols);renderPickup(cfg.pickup_conditions);renderTF(cfg.timeframes);renderST(cfg.supertrend_params);dirty=false;}
+function renderAll(json){cfg=JSON.parse(JSON.stringify(json));renderSymbols(cfg.symbols);renderPickup(cfg.pickup_conditions);renderTF(cfg.timeframes);renderST(cfg.supertrend_params);renderScan(cfg.scan_conditions||defaultScan());dirty=false;}
 function renderSymbols(symbols){var cats={};symbols.forEach(function(s,i){if(!cats[s.category])cats[s.category]=[];cats[s.category].push({s:s,i:i});});var html='';Object.keys(cats).forEach(function(cat){html+='<div class="sec-head">'+cat+'</div><div class="sym-list">';cats[cat].forEach(function(item){var s=item.s,i=item.i;html+='<div class="sym-row'+(s.enabled?'':' off')+'" id="sr'+i+'"><div class="sym-info"><div class="sym-name">'+s.name+'</div><div class="sym-ticker">'+s.ticker+'</div><span class="sym-cat">'+s.category+'</span></div><div class="sym-actions"><label class="toggle"><input type="checkbox"'+(s.enabled?' checked':'')+' onchange="toggleSym('+i+',this.checked)"><span class="ttrack"></span></label><button class="del-btn" onclick="delSym('+i+')">x</button></div></div>';});html+='</div>';});document.getElementById('sym-sections').innerHTML=html;}
 function toggleSym(i,v){cfg.symbols[i].enabled=v;var r=document.getElementById('sr'+i);if(r)r.classList.toggle('off',!v);markDirty();}
 function delSym(i){if(!confirm('Delete "'+cfg.symbols[i].name+'"?'))return;cfg.symbols.splice(i,1);renderSymbols(cfg.symbols);markDirty();}
@@ -190,6 +233,12 @@ function renderPickup(c){document.getElementById('mtf-slider').value=c.mtf_score
 function renderTF(tfs){var html='';tfs.forEach(function(tf,i){html+='<div class="tf-row"><div class="tf-info"><div class="tf-name">'+tf.label+'</div><div class="tf-detail">'+tf.interval+' / '+tf.period+'</div><div class="wrow"><span class="wlabel">Weight</span><input type="range" min="1" max="5" step="1" value="'+tf.weight+'" style="flex:1;margin:0 8px" oninput="updateWeight('+i+',this.value);document.getElementById(\'wv'+i+'\').textContent=this.value"><span class="wval" id="wv'+i+'">'+tf.weight+'</span></div></div><label class="toggle"><input type="checkbox"'+(tf.enabled?' checked':'')+' onchange="toggleTF('+i+',this.checked)"><span class="ttrack"></span></label></div>';});document.getElementById('tf-list').innerHTML=html;}
 function toggleTF(i,v){cfg.timeframes[i].enabled=v;markDirty();}
 function updateWeight(i,v){cfg.timeframes[i].weight=parseInt(v);markDirty();}
+
+function defaultScan(){return {enabled:true,jp_max_price:1000,us_max_price:50,max_1h_bars:20,max_results:20};}
+function renderScan(sc){if(!sc)sc=defaultScan();if(!cfg.scan_conditions)cfg.scan_conditions=sc;document.getElementById('sc-enabled').checked=!!sc.enabled;document.getElementById('sc-jp-price').value=sc.jp_max_price||1000;document.getElementById('sc-us-price').value=sc.us_max_price||50;document.getElementById('sc-bars').value=sc.max_1h_bars||20;document.getElementById('sc-results').value=sc.max_results||20;}
+function updateScan(){if(!cfg.scan_conditions)cfg.scan_conditions=defaultScan();cfg.scan_conditions.enabled=document.getElementById('sc-enabled').checked;cfg.scan_conditions.jp_max_price=parseInt(document.getElementById('sc-jp-price').value)||1000;cfg.scan_conditions.us_max_price=parseInt(document.getElementById('sc-us-price').value)||50;cfg.scan_conditions.max_1h_bars=parseInt(document.getElementById('sc-bars').value)||20;cfg.scan_conditions.max_results=parseInt(document.getElementById('sc-results').value)||20;dirty=true;}
+function adjScan(key,delta){if(!cfg.scan_conditions)cfg.scan_conditions=defaultScan();cfg.scan_conditions[key]=(cfg.scan_conditions[key]||0)+delta;renderScan(cfg.scan_conditions);dirty=true;}
+
 function renderST(p){document.getElementById('atr-slider').value=p.atr_period;document.getElementById('atr-val').innerHTML=p.atr_period+'<span> bars</span>';document.getElementById('mult-slider').value=p.multiplier;document.getElementById('mult-val').innerHTML=parseFloat(p.multiplier).toFixed(1)+'<span>x</span>';}
 function buildConfig(){return{symbols:cfg.symbols,timeframes:cfg.timeframes,pickup_conditions:{mtf_score_threshold:parseInt(document.getElementById('mtf-slider').value),min_tf_agreement:parseInt(document.getElementById('agree-slider').value),require_dow_trend:document.getElementById('req-dow').checked,require_supertrend_align:document.getElementById('req-st').checked},supertrend_params:{atr_period:parseInt(document.getElementById('atr-slider').value),multiplier:parseFloat(document.getElementById('mult-slider').value)}};}
 function defaultConfig(){return{symbols:[{name:'Gold',ticker:'GC=F',category:'Metals',enabled:true},{name:'Silver',ticker:'SI=F',category:'Metals',enabled:true},{name:'USD/JPY',ticker:'JPY=X',category:'FX',enabled:true},{name:'EUR/USD',ticker:'EURUSD=X',category:'FX',enabled:true},{name:'SPY',ticker:'SPY',category:'US Stocks',enabled:true},{name:'QQQ',ticker:'QQQ',category:'US Stocks',enabled:true},{name:'NVIDIA',ticker:'NVDA',category:'US Stocks',enabled:true},{name:'Nikkei225',ticker:'^N225',category:'JP Stocks',enabled:true},{name:'Toyota',ticker:'7203.T',category:'JP Stocks',enabled:true},{name:'MUFG',ticker:'8306.T',category:'JP Stocks',enabled:true}],timeframes:[{label:'Weekly',interval:'1wk',period:'2y',weight:4,enabled:true},{label:'Daily',interval:'1d',period:'1y',weight:3,enabled:true},{label:'4H',interval:'1h',period:'60d',weight:2,enabled:true},{label:'1H',interval:'1h',period:'30d',weight:1,enabled:true},{label:'15M',interval:'15m',period:'60d',weight:1,enabled:true}],pickup_conditions:{mtf_score_threshold:70,min_tf_agreement:3,require_dow_trend:true,require_supertrend_align:true},supertrend_params:{atr_period:10,multiplier:3.0}};}

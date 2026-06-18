@@ -274,7 +274,8 @@ def main():
     print(f"\n{'='*55}")
     print("  HTMLレポート生成中...")
     html = generate_html(all_results, pickup_list, chart_html_map,
-                         hot_list=hot_list, symbol_info_map=symbol_info_map)
+                         hot_list=hot_list, symbol_info_map=symbol_info_map,
+                         scan_results=scan_results)
 
     out_path = OUTPUT.get("html_path", "output/report.html")
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)

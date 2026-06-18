@@ -39,6 +39,92 @@ def _fmt_price(v):
     return f"{v:.5f}"
 
 
+
+# ── スキャンセクション ────────────────────────────────────
+def _scan_section(scan_results: list, categories: list) -> str:
+    """チャンスゾーンスキャン結果のHTML"""
+    if not scan_results:
+        return ""
+
+    cards = ""
+    for r in scan_results:
+        ticker   = r["ticker"]
+        sid      = ticker.replace("=","").replace("^","").replace(".","")
+        name     = r["name"]
+        cat      = r["category"]
+        price    = r["price"]
+        direction= r["direction"]
+        score    = r["score"]
+        bars     = r["bars_since"]
+        daily_ok = r["daily_ok"]
+        h4_ok    = r["h4_ok"]
+        range_pos= r.get("range_pos")
+
+        col   = "var(--up)"   if direction == "up"   else "var(--down)"
+        arrow = "↑" if direction == "up" else "↓"
+        icon  = "🇯🇵" if ".T" in ticker else "🇺🇸"
+        price_str = f"¥{price:,.0f}" if ".T" in ticker else f"${price:.2f}"
+
+        # TF状態バッジ
+        tf_badges = ""
+        if daily_ok:
+            tf_badges += f'<span class="sc-badge" style="background:rgba(0,212,170,.15);color:var(--up)">日足{arrow}</span>'
+        if h4_ok:
+            tf_badges += f'<span class="sc-badge" style="background:rgba(0,212,170,.15);color:var(--up)">4H{arrow}</span>'
+        tf_badges += f'<span class="sc-badge" style="background:rgba(74,158,255,.15);color:var(--blue)">1H転換{bars}本前</span>'
+
+        # レンジ位置
+        pos_html = ""
+        if range_pos is not None:
+            dot_col = "var(--up)" if range_pos > 60 else "var(--down)" if range_pos < 40 else "var(--rng)"
+            pos_html = (f'<div class="sc-pos">'
+                       f'<div class="sc-pos-bar">'
+                       f'<div class="sc-pos-dot" style="left:{range_pos}%;background:{dot_col}"></div>'
+                       f'</div>'
+                       f'<span style="color:{dot_col};font-size:10px">{range_pos}%</span>'
+                       f'</div>')
+
+        # カテゴリが既存の監視対象にあるか判定（追加ボタン用）
+        add_btn = (f'<button class="sc-add-btn" '
+                   f'onclick="confirmAdd(&quot;{ticker}&quot;,&quot;{name}&quot;,&quot;{cat}&quot;)">'
+                   f'+ 監視追加</button>')
+
+        cards += (
+            f'<div class="sc-card" id="sc_{sid}">'
+            f'<div class="sc-top">'
+            f'<span class="sc-icon">{icon}</span>'
+            f'<div class="sc-info">'
+            f'<div class="sc-name-row">'
+            f'<span class="sc-name">{name}</span>'
+            f'<span class="sc-ticker">{ticker}</span>'
+            f'</div>'
+            f'<div class="sc-badges">{tf_badges}</div>'
+            f'</div>'
+            f'<div class="sc-right">'
+            f'<span class="sc-price">{price_str}</span>'
+            f'<span class="sc-score" style="color:{col}">{score}pt {arrow}</span>'
+            f'</div>'
+            f'</div>'
+            f'{pos_html}'
+            f'<div class="sc-footer">{add_btn}</div>'
+            f'</div>'
+        )
+
+    return f'''
+<div class="scan-section" id="sec-scan">
+  <div class="scan-hdr" onclick="toggleSec('sec-scan')">
+    <span class="scan-title">🔍 チャンスゾーン
+      <span class="scan-sub">1H転換 × 上位TF一致</span>
+    </span>
+    <span class="arr" id="arr-sec-scan">▲</span>
+  </div>
+  <div class="sec-body" id="body-sec-scan">
+    <div class="sc-list">{cards}</div>
+  </div>
+</div>
+'''
+
+
 # ── ホット銘柄（折りたたみ） ──────────────────────────────
 def _hot_section(hot_list):
     if not hot_list: return ""
@@ -414,8 +500,9 @@ def _symbol_card(item):
 
 # ── メイン ────────────────────────────────────────────────
 def generate_html(all_results, pickup_list, chart_html_map=None,
-                  hot_list=None, symbol_info_map=None):
+                  hot_list=None, symbol_info_map=None, scan_results=None):
     if symbol_info_map is None: symbol_info_map = {}
+    if scan_results is None: scan_results = []
 
     now  = datetime.now().strftime("%Y-%m-%d %H:%M")
     refresh_meta = ""
@@ -448,6 +535,7 @@ def generate_html(all_results, pickup_list, chart_html_map=None,
     from chart import get_lw_charts_js
     lw_js = get_lw_charts_js()
 
+    scan_html = _scan_section(scan_results, categories)
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -644,6 +732,7 @@ main{{padding:6px 12px calc(40px + env(safe-area-inset-bottom,0px));max-width:90
 
 <main>
   {_hot_section(hot_list or [])}
+  {scan_html}
   {_pickup_strip(pickup_list)}
   <div id="cc">{cards_html}</div>
   <div id="no-results">No symbols found</div>
@@ -770,6 +859,47 @@ function toggleAI(id){{
     text.classList.add('collapsed');
     if(more) more.textContent='▼';
   }}
+}}
+
+// ── 監視追加 ──
+function confirmAdd(ticker, name, cat){{
+  var ok = confirm(name + " (" + ticker + ") を監視対象に追加しますか？");
+  if(!ok) return;
+  var repo  = localStorage.getItem("gh_repo")  || "";
+  var token = localStorage.getItem("gh_token") || "";
+  if(!repo){{repo=prompt("GitHub repo:");if(!repo)return;localStorage.setItem("gh_repo",repo);}}
+  if(!token){{token=prompt("GitHub Token:");if(!token)return;localStorage.setItem("gh_token",token);}}
+  var apiBase = "https://api.github.com/repos/" + repo;
+  fetch(apiBase + "/contents/config.json", {{
+    headers:{{"Authorization":"Bearer "+token}}
+  }}).then(r=>r.json()).then(function(data){{
+    var sha = data.sha;
+    var bin=atob(data.content.replace(/\n/g,""));
+    var bytes=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    var content=JSON.parse(new TextDecoder("utf-8").decode(bytes));
+    var exists = content.symbols.some(function(s){{return s.ticker===ticker;}});
+    if(exists){{ alert(name + " はすでに登録済みです"); return; }}
+    content.symbols.push({{name:name, ticker:ticker, category:cat, enabled:true}});
+    var newContent = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
+    return fetch(apiBase + "/contents/config.json", {{
+      method:"PUT",
+      headers:{{"Authorization":"Bearer "+token,"Content-Type":"application/json"}},
+      body: JSON.stringify({{
+        message: "Add " + ticker + " to watchlist",
+        content: newContent,
+        sha: sha
+      }})
+    }});
+  }}).then(function(r){{
+    if(r && r.ok){{
+      var btn = document.querySelector("#sc_" + ticker.replace(/[=^.]/g,"") + " .sc-add-btn");
+      if(btn){{ btn.textContent="✓ 追加済み"; btn.classList.add("added"); btn.disabled=true; }}
+      alert(name + " を監視対象に追加しました！");
+    }} else if(r) {{
+      alert("エラー: HTTP " + r.status);
+    }}
+  }}).catch(function(e){{ alert("エラー: " + e.message); }});
 }}
 
 // Init
