@@ -224,19 +224,12 @@ def main():
         from ai_analysis import build_price_info
         price_info = build_price_info(tf_results)
 
-        # AI分析コメント生成
+        # AI分析はブラウザから直接実行するため不要
         ai_comment = ""
-        gemini_key = os.environ.get("GEMINI_API_KEY", "")
-        if gemini_key and mtf.get("score", 0) >= 50:
-            try:
-                from ai_analysis import generate_ai_comment
-                import time; time.sleep(8)
-                print(f"  AI分析中...", end="", flush=True)
-                ai_comment = generate_ai_comment(
-                    sym, tf_results, mtf, entry_points, price_info, gemini_key)
-                print(f" 完了" if ai_comment else " スキップ")
-            except Exception as e:
-                print(f" エラー: {e}")
+        try:
+            import time
+        except:
+            pass
 
         pickup = check_pickup(sym, mtf, tf_results, cond=pickup_cond)
         if pickup:
@@ -269,6 +262,21 @@ def main():
             symbol_info_map = fetch_all_symbol_info(tickers)
         except Exception as e:
             print(f"  [WARNING] 詳細情報取得失敗: {e}")
+
+    # ── スキャン実行 ──────────────────────────────
+    scan_results = []
+    scan_cond = cfg.get("scan_conditions", {})
+    if scan_cond.get("enabled", True):
+        try:
+            from scanner import run_scan
+            scan_results = run_scan(
+                jp_max_price = scan_cond.get("jp_max_price", 1000),
+                us_max_price = scan_cond.get("us_max_price", 50),
+                max_1h_bars  = scan_cond.get("max_1h_bars",  20),
+                max_results  = scan_cond.get("max_results",  20),
+            )
+        except Exception as e:
+            print(f"  [WARNING] scan error: {e}")
 
     # HTML生成
     print(f"\n{'='*55}")
