@@ -44,8 +44,6 @@ jobs:
           echo "lw_charts.js: $(wc -c < lw_charts.js) bytes"
 
       - name: Run analysis
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python analyze.py
 
       - name: Check output
