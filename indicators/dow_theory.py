@@ -6,7 +6,14 @@ import numpy as np
 from datetime import datetime
 
 
-def detect_swing_points(df: pd.DataFrame, window: int = 5) -> pd.DataFrame:
+def detect_swing_points(df: pd.DataFrame, window: int = 5,
+                        dedupe_ties: bool = False) -> pd.DataFrame:
+    """
+    dedupe_ties=True : 隣り合う足が同値の高値/安値のとき、最初の1本だけをスイング点にする。
+                       （1円刻みの低位株などで同値が並ぶと、同じ山が2点に数えられ
+                         「切り上げ/切り下げ」が同値になってレンジ扱いになるのを防ぐ）
+    既定(False)は従来どおりの挙動。
+    """
     df = df.copy()
     highs = df["High"]
     lows  = df["Low"]
@@ -14,9 +21,14 @@ def detect_swing_points(df: pd.DataFrame, window: int = 5) -> pd.DataFrame:
     swing_low  = pd.Series(False, index=df.index)
 
     for i in range(window, len(df) - window):
-        if highs.iloc[i] == highs.iloc[i - window: i + window + 1].max():
+        is_high = highs.iloc[i] == highs.iloc[i - window: i + window + 1].max()
+        is_low  = lows.iloc[i]  == lows.iloc[i - window: i + window + 1].min()
+        if dedupe_ties:
+            is_high = is_high and highs.iloc[i] > highs.iloc[i - window: i].max()
+            is_low  = is_low  and lows.iloc[i]  < lows.iloc[i - window: i].min()
+        if is_high:
             swing_high.iloc[i] = True
-        if lows.iloc[i] == lows.iloc[i - window: i + window + 1].min():
+        if is_low:
             swing_low.iloc[i] = True
 
     df["swing_high"] = swing_high
@@ -62,7 +74,8 @@ def _bars_and_time_since(df: pd.DataFrame, target_index) -> dict:
     return {"bars": bars_ago, "elapsed_str": elapsed_str}
 
 
-def analyze_dow_theory(df: pd.DataFrame, window: int = 5, min_swings: int = 4) -> dict:
+def analyze_dow_theory(df: pd.DataFrame, window: int = 5, min_swings: int = 4,
+                       dedupe_ties: bool = False) -> dict:
     """
     ダウ理論でトレンド方向・転換タイミングを判定する
 
@@ -73,7 +86,7 @@ def analyze_dow_theory(df: pd.DataFrame, window: int = 5, min_swings: int = 4) -
         pending      : 転換しそう（片方の条件のみ成立）の状態
         pending_desc : 転換しそうの説明
     """
-    df = detect_swing_points(df, window)
+    df = detect_swing_points(df, window, dedupe_ties=dedupe_ties)
 
     sh = df[df["swing_high"]][["High"]].copy()
     sl = df[df["swing_low"]][["Low"]].copy()
