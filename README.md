@@ -78,3 +78,15 @@ yfinance（Yahoo Finance）を使用。ティッカー例：
 - 貴金属: `GC=F` `SI=F`
 - 日本株: `7203.T`（末尾に `.T`）
 - 日経225: `^N225`
+
+## 日本株スイング候補（swing_scan.py）
+
+現物・短期（数日〜1週間）の**買い候補**を、週足+日足のダウ理論とスーパートレンドで毎営業日抽出します。
+
+- 実行: `.github/workflows/swing_scan.yml`（平日17:00 JST）。出力は `output/swing_candidates.json`、採点用の履歴は `output/swing_log.csv`
+- 余力・許容損失は**公開リポジトリに書かず**、Secrets の `SWING_CAPITAL` / `SWING_MAX_LOSS`（円）で渡します
+- 絞り込み: 株価≤余力/100株、ATR%≥2.5、20日平均売買代金≥2億円（`swing_config.json`）
+- 損切り=直近確定スイング安値−0.2ATR、押し目指値=直近レッグの50%戻し、RR=直近高値まで（RR≥1のみ）
+- 決算・ニュースは未確認（別工程で確認する前提）
+- ローカル検算: `python tests/test_swing_scan.py`（ネットワーク不要）
+- `indicators/dow_theory.py` に `dedupe_ties`（既定False＝従来どおり）を追加。同値の隣接ピボットを1点にまとめます
